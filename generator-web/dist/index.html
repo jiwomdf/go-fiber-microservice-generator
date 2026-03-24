@@ -42,18 +42,7 @@
         min-height: 100vh;
         font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
         color: var(--ink);
-        background:
-          radial-gradient(
-            circle at top left,
-            rgba(125, 211, 252, 0.08),
-            transparent 28%
-          ),
-          radial-gradient(
-            circle at bottom right,
-            rgba(255, 255, 255, 0.04),
-            transparent 24%
-          ),
-          linear-gradient(135deg, #18181b 0%, #232326 100%);
+        background: var(--bg);
         display: grid;
         place-items: center;
         padding: 32px 20px;
@@ -61,7 +50,7 @@
 
       .shell {
         width: min(860px, 100%);
-        background: var(--panel);
+        background: var(--bg);
         border: 1px solid var(--line);
         border-radius: 28px;
         box-shadow: var(--shadow);
@@ -265,7 +254,8 @@
 
       .apply-button {
         color: lightgrey;
-        white-space: nowrap;
+        width: 100%;
+        margin-top: 18px;
       }
 
       .hint {
@@ -334,13 +324,15 @@
             <input
               id="traefik-port"
               name="traefik-port"
-              type="number"
               min="1"
               max="65535"
               placeholder="8000"
               required
             />
           </label>
+        </div>
+
+        <div>
           <label>
             Number Of New Services
             <input
@@ -363,39 +355,49 @@
           <div class="services">
             <div class="service-card base-service-card">
               <strong>auth-service</strong>
-              <div class="grid">
-                <label>
-                  HTTP Port
-                  <input id="auth-http-port" placeholder="7704" required />
-                </label>
-                <label>
-                  gRPC Port
-                  <input id="auth-grpc-port" placeholder="57704" required />
-                </label>
-                <label>
-                  DB Host
-                  <input id="auth-db-host" placeholder="localhost" required />
-                </label>
-                <label>
-                  DB Port
-                  <input id="auth-db-port" placeholder="5432" required />
-                </label>
-                <label>
-                  DB Name
-                  <input
-                    id="auth-db-name"
-                    placeholder="somedatabase"
-                    required
-                  />
-                </label>
-                <label>
-                  DB Username
-                  <input id="auth-db-user" placeholder="postgres" required />
-                </label>
-                <label>
-                  DB Password
-                  <input id="auth-db-password" placeholder="your-password" />
-                </label>
+
+              <div class="service-subsection non-db-section">
+                <h3 class="subsection-title">Service Config</h3>
+                <div class="grid">
+                  <label>
+                    HTTP Port
+                    <input id="auth-http-port" placeholder="7704" required />
+                  </label>
+                  <label>
+                    gRPC Port
+                    <input id="auth-grpc-port" placeholder="57704" required />
+                  </label>
+                </div>
+              </div>
+
+              <div class="service-subsection db-section">
+                <h3 class="subsection-title">Database Config</h3>
+                <div class="grid">
+                  <label>
+                    DB Host
+                    <input id="auth-db-host" placeholder="localhost" required />
+                  </label>
+                  <label>
+                    DB Port
+                    <input id="auth-db-port" placeholder="5432" required />
+                  </label>
+                  <label>
+                    DB Name
+                    <input
+                      id="auth-db-name"
+                      placeholder="somedatabase"
+                      required
+                    />
+                  </label>
+                  <label>
+                    DB Username
+                    <input id="auth-db-user" placeholder="postgres" required />
+                  </label>
+                  <label>
+                    DB Password
+                    <input id="auth-db-password" placeholder="your-password" />
+                  </label>
+                </div>
               </div>
             </div>
           </div>
