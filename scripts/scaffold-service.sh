@@ -16,6 +16,7 @@ EOF
 
 command -v rsync >/dev/null 2>&1 || { echo "rsync is required" >&2; exit 1; }
 command -v perl >/dev/null 2>&1 || { echo "perl is required" >&2; exit 1; }
+command -v python3 >/dev/null 2>&1 || { echo "python3 is required" >&2; exit 1; }
 
 slugify() {
   printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | perl -pe 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-{2,}/-/g'
@@ -30,6 +31,122 @@ replace_all() {
   local from="$2"
   local to="$3"
   FROM="$from" TO="$to" perl -0pi -e 's/\Q$ENV{FROM}\E/$ENV{TO}/g' "$file"
+}
+
+next_service_ports() {
+  python3 - "$repo_root" <<'PY'
+import pathlib
+import re
+import sys
+
+repo_root = pathlib.Path(sys.argv[1])
+http_ports = []
+grpc_ports = []
+
+for cfg in repo_root.glob("*-service/config.dev.yaml"):
+    text = cfg.read_text()
+    for match in re.finditer(r'^\s*port:\s*"(\d+)"\s*$', text, re.MULTILINE):
+        port = int(match.group(1))
+        if 7000 <= port < 8000:
+            http_ports.append(port)
+    grpc_match = re.search(r'^\s*grpc_port:\s*"(\d+)"\s*$', text, re.MULTILINE)
+    if grpc_match:
+        grpc_ports.append(int(grpc_match.group(1)))
+
+next_http = max(http_ports, default=7703) + 1
+next_grpc = max(grpc_ports, default=57703) + 1
+print(f"{next_http} {next_grpc}")
+PY
+}
+
+append_compose_service() {
+  local compose_file="$repo_root/docker-compose.yml"
+  [[ -f "$compose_file" ]] || return 0
+  grep -q "^  ${service_name}:" "$compose_file" && return 0
+
+  SERVICE_NAME="$service_name" HTTP_PORT="$http_port" python3 - "$compose_file" <<'PY'
+import os
+import pathlib
+import sys
+
+compose_file = pathlib.Path(sys.argv[1])
+service_name = os.environ["SERVICE_NAME"]
+http_port = os.environ["HTTP_PORT"]
+
+block = f"""
+  {service_name}:
+    build:
+      context: ./{service_name}
+    container_name: {service_name}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DATABASE: fiber_microservice
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin1234
+      POSTGRES_SCHEMA: public
+      SERVER_HTTP_PORT: "{http_port}"
+    ports:
+      - "{http_port}:{http_port}"
+"""
+
+text = compose_file.read_text()
+marker = "\n  kong:\n"
+if marker not in text:
+    raise SystemExit("could not find kong service block in docker-compose.yml")
+text = text.replace(marker, block + marker, 1)
+compose_file.write_text(text)
+PY
+}
+
+append_kong_service() {
+  local kong_file="$repo_root/kong/kong.yml"
+  [[ -f "$kong_file" ]] || return 0
+  grep -q "name: ${service_name}" "$kong_file" && return 0
+
+  SERVICE_NAME="$service_name" ENTITY="$entity" HTTP_PORT="$http_port" python3 - "$kong_file" <<'PY'
+import os
+import pathlib
+import sys
+
+kong_file = pathlib.Path(sys.argv[1])
+service_name = os.environ["SERVICE_NAME"]
+entity = os.environ["ENTITY"]
+http_port = os.environ["HTTP_PORT"]
+
+block = f"""
+
+  - name: {service_name}
+    url: http://{service_name}:{http_port}/api/{service_name}/v1/{entity}
+    routes:
+      - name: {entity}-route
+        paths:
+          - /api/v1/{entity}
+        methods:
+          - GET
+          - POST
+          - PATCH
+          - DELETE
+          - OPTIONS
+        strip_path: true
+    plugins:
+      - name: jwt
+        config:
+          key_claim_name: iss
+          secret_is_base64: false
+          claims_to_verify:
+            - exp
+"""
+
+text = kong_file.read_text()
+if not text.endswith("\n"):
+    text += "\n"
+text += block
+kong_file.write_text(text)
+PY
 }
 
 entity="$(slugify "${1:-}")"
@@ -49,6 +166,8 @@ target_dir="$(cd "$(dirname "$output_dir")" && pwd)/$(basename "$output_dir")"
 [[ -d "$source_dir" ]] || { echo "template directory not found: $source_dir" >&2; exit 1; }
 [[ ! -e "$target_dir" ]] || { echo "target directory already exists: $target_dir" >&2; exit 1; }
 
+read -r http_port grpc_port < <(next_service_ports)
+
 mkdir -p "$(dirname "$target_dir")"
 rsync -a \
   --exclude '.git' \
@@ -67,6 +186,7 @@ mv "$target_dir/data/delivery/grpc/proto/user.proto" "$target_dir/data/delivery/
 
 files=(
   "$target_dir/go.mod"
+  "$target_dir/Dockerfile"
   "$target_dir/Makefile"
   "$target_dir/app/main.go"
   "$target_dir/config.dev.yaml"
@@ -135,5 +255,17 @@ for file in "${entity_files[@]}"; do
 done
 
 replace_all "$target_dir/config/struct.go" 'ClientID:          "user",' "ClientID:          \"${entity}\","
+replace_all "$target_dir/config.dev.yaml" 'port: "7705"' "port: \"${http_port}\""
+replace_all "$target_dir/config.local.yaml" 'port: "7705"' "port: \"${http_port}\""
+replace_all "$target_dir/config.dev.yaml" 'grpc_port: "57705"' "grpc_port: \"${grpc_port}\""
+replace_all "$target_dir/config.local.yaml" 'grpc_port: "57705"' "grpc_port: \"${grpc_port}\""
+replace_all "$target_dir/Dockerfile" 'EXPOSE 7705' "EXPOSE ${http_port}"
+replace_all "$target_dir/openapi.yaml" 'url: http://localhost:7704/api/' "url: http://localhost:${http_port}/api/"
+
+if [[ "$target_dir" == "$repo_root/"* ]]; then
+  append_compose_service
+  append_kong_service
+fi
 
 echo "Generated service at: $target_dir"
+echo "Assigned ports: http=${http_port}, grpc=${grpc_port}"
