@@ -39,7 +39,9 @@ const servicesEl = document.getElementById("services") as HTMLDivElement;
 const countEl = document.getElementById("service-count") as HTMLInputElement;
 const formEl = document.getElementById("generator-form") as HTMLFormElement;
 const statusEl = document.getElementById("status") as HTMLDivElement;
-const buttonEl = document.getElementById("generate-button") as HTMLButtonElement;
+const buttonEl = document.getElementById(
+  "generate-button",
+) as HTMLButtonElement;
 const applyServicesButtonEl = document.getElementById(
   "apply-services-button",
 ) as HTMLButtonElement;
@@ -88,11 +90,11 @@ function renderServiceInputs(): void {
           </label>
           <label>
             HTTP Port
-            <input name="http-port" type="number" min="7000" max="7999" placeholder="auto">
+            <input name="http-port" min="0" max="65535" placeholder="auto">
           </label>
           <label>
             gRPC Port
-            <input name="grpc-port" type="number" min="57000" max="59999" placeholder="auto">
+            <input name="grpc-port" min="0" max="65535" placeholder="auto">
           </label>
         </div>
       </div>
@@ -141,7 +143,9 @@ function applyServiceInputs(): void {
     return;
   }
 
-  setStatus(`${count} service input${count > 1 ? "s are" : " is"} ready to fill.`);
+  setStatus(
+    `${count} service input${count > 1 ? "s are" : " is"} ready to fill.`,
+  );
 }
 
 function readValue(id: string): string {
@@ -155,8 +159,9 @@ function readDatabase(prefix: string): DatabaseConfig {
     port: readValue(`${prefix}-db-port`),
     database: readValue(`${prefix}-db-name`),
     username: readValue(`${prefix}-db-user`),
-    password: (document.getElementById(`${prefix}-db-password`) as HTMLInputElement)
-      .value,
+    password: (
+      document.getElementById(`${prefix}-db-password`) as HTMLInputElement
+    ).value,
   };
 }
 
@@ -222,7 +227,12 @@ function normalizeDbConfig(label: string, db: DatabaseConfig): DatabaseConfig {
   return normalized;
 }
 
-function parsePort(raw: string, min: number, max: number, label: string): number {
+function parsePort(
+  raw: string,
+  min: number,
+  max: number,
+  label: string,
+): number {
   if (!raw.trim()) {
     return 0;
   }
@@ -264,7 +274,8 @@ function normalizeRequest(
   }
 
   const authDb = normalizeDbConfig("auth-service", authDbRaw);
-  const traefikPort = parsePort(traefikPortRaw, 1, 65535, "Traefik port") || 8000;
+  const traefikPort =
+    parsePort(traefikPortRaw, 1, 65535, "Traefik port") || 8000;
   const authHttpPort =
     parsePort(authHttpPortRaw, 7000, 7999, "auth-service http port") || 7704;
   const authGrpcPort =
@@ -285,11 +296,18 @@ function normalizeRequest(
       throw new Error("Service names must contain letters or numbers.");
     }
     if (serviceName === "auth") {
-      throw new Error('"auth" is reserved because the base project already contains auth-service.');
+      throw new Error(
+        '"auth" is reserved because the base project already contains auth-service.',
+      );
     }
 
     const db = normalizeDbConfig(`${serviceName}-service`, raw.db);
-    let httpPort = parsePort(raw.httpPort, 7000, 7999, `${serviceName} http port`);
+    let httpPort = parsePort(
+      raw.httpPort,
+      7000,
+      7999,
+      `${serviceName} http port`,
+    );
     if (httpPort === 0) {
       nextHttp = nextUnusedPort(nextHttp + 1, usedHttp);
       httpPort = nextHttp;
@@ -298,7 +316,12 @@ function normalizeRequest(
       throw new Error(`HTTP port already in use: ${httpPort}`);
     }
 
-    let grpcPort = parsePort(raw.grpcPort, 57000, 59999, `${serviceName} grpc port`);
+    let grpcPort = parsePort(
+      raw.grpcPort,
+      57000,
+      59999,
+      `${serviceName} grpc port`,
+    );
     if (grpcPort === 0) {
       nextGrpc = nextUnusedPort(nextGrpc + 1, usedGrpc);
       grpcPort = nextGrpc;
@@ -333,13 +356,16 @@ async function runWithConcurrency<T>(
   worker: (item: T, index: number) => Promise<void>,
 ): Promise<void> {
   let cursor = 0;
-  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (cursor < items.length) {
-      const current = cursor;
-      cursor += 1;
-      await worker(items[current], current);
-    }
-  });
+  const runners = Array.from(
+    { length: Math.min(limit, items.length) },
+    async () => {
+      while (cursor < items.length) {
+        const current = cursor;
+        cursor += 1;
+        await worker(items[current], current);
+      }
+    },
+  );
   await Promise.all(runners);
 }
 
@@ -361,7 +387,9 @@ async function fetchTemplateFiles(
     }
     files.set(path, await response.text());
     completed += 1;
-    updateStatus(`Fetching template files from GitHub (${completed}/${TEMPLATE_FILE_PATHS.length})...`);
+    updateStatus(
+      `Fetching template files from GitHub (${completed}/${TEMPLATE_FILE_PATHS.length})...`,
+    );
   });
 
   return files;
@@ -375,7 +403,11 @@ function getFile(files: Map<string, string>, path: string): string {
   return content;
 }
 
-function setFile(files: Map<string, string>, path: string, content: string): void {
+function setFile(
+  files: Map<string, string>,
+  path: string,
+  content: string,
+): void {
   files.set(path, content);
 }
 
@@ -549,18 +581,22 @@ function updateComposeServiceEnv(
       inEnvironment = false;
       continue;
     }
-    if (inEnvironment && line.startsWith("    ") && !line.startsWith("      ")) {
+    if (
+      inEnvironment &&
+      line.startsWith("    ") &&
+      !line.startsWith("      ")
+    ) {
       inEnvironment = false;
     }
     if (inPorts && line.startsWith("    ") && !line.startsWith("      ")) {
       inPorts = false;
     }
     if (!inEnvironment) {
-      if (inPorts && line.startsWith("      - \"")) {
+      if (inPorts && line.startsWith('      - "')) {
         lines[index] = `      - "${httpPort}:${httpPort}"`;
         break;
       }
-      if (line.startsWith("      - \"")) {
+      if (line.startsWith('      - "')) {
         continue;
       }
       continue;
@@ -581,10 +617,17 @@ function updateComposeServiceEnv(
     }
   }
 
-  setFile(files, path, ensureComposeServiceExtraHosts(lines.join("\n"), serviceName));
+  setFile(
+    files,
+    path,
+    ensureComposeServiceExtraHosts(lines.join("\n"), serviceName),
+  );
 }
 
-function ensureComposeServiceExtraHosts(text: string, serviceName: string): string {
+function ensureComposeServiceExtraHosts(
+  text: string,
+  serviceName: string,
+): string {
   const lines = text.split("\n");
   const output: string[] = [];
   let currentService = "";
@@ -635,14 +678,33 @@ function updateServiceConfig(
   grpcPort: number,
   db: DatabaseConfig,
 ): void {
-  updateConfigSettings(files, `${serviceName}/config.dev.yaml`, httpPort, grpcPort, db);
-  updateConfigSettings(files, `${serviceName}/config.local.yaml`, httpPort, grpcPort, db);
+  updateConfigSettings(
+    files,
+    `${serviceName}/config.dev.yaml`,
+    httpPort,
+    grpcPort,
+    db,
+  );
+  updateConfigSettings(
+    files,
+    `${serviceName}/config.local.yaml`,
+    httpPort,
+    grpcPort,
+    db,
+  );
   updateComposeServiceEnv(files, serviceName, httpPort, db);
 }
 
-function updateTraefikBasePorts(files: Map<string, string>, authHttpPort: number): void {
+function updateTraefikBasePorts(
+  files: Map<string, string>,
+  authHttpPort: number,
+): void {
   let routes = getFile(files, "traefik/dynamic/routes.yml");
-  routes = replaceAllLiteral(routes, "http://auth-service:7704", `http://auth-service:${authHttpPort}`);
+  routes = replaceAllLiteral(
+    routes,
+    "http://auth-service:7704",
+    `http://auth-service:${authHttpPort}`,
+  );
   setFile(files, "traefik/dynamic/routes.yml", routes);
 
   let middlewares = getFile(files, "traefik/dynamic/middlewares.yml");
@@ -654,13 +716,24 @@ function updateTraefikBasePorts(files: Map<string, string>, authHttpPort: number
   setFile(files, "traefik/dynamic/middlewares.yml", middlewares);
 }
 
-function updateTraefikPort(files: Map<string, string>, traefikPort: number): void {
+function updateTraefikPort(
+  files: Map<string, string>,
+  traefikPort: number,
+): void {
   let compose = getFile(files, "docker-compose.yml");
-  compose = replaceAllLiteral(compose, '- "8000:8000"', `- "${traefikPort}:${traefikPort}"`);
+  compose = replaceAllLiteral(
+    compose,
+    '- "8000:8000"',
+    `- "${traefikPort}:${traefikPort}"`,
+  );
   setFile(files, "docker-compose.yml", compose);
 
   let traefikConfig = getFile(files, "traefik/traefik.yml");
-  traefikConfig = replaceAllLiteral(traefikConfig, 'address: ":8000"', `address: ":${traefikPort}"`);
+  traefikConfig = replaceAllLiteral(
+    traefikConfig,
+    'address: ":8000"',
+    `address: ":${traefikPort}"`,
+  );
   setFile(files, "traefik/traefik.yml", traefikConfig);
 }
 
@@ -688,7 +761,10 @@ function appendComposeService(
     ports:
       - "${httpPort}:${httpPort}"
 `;
-  const compose = getFile(files, "docker-compose.yml").replace("\n  traefik:\n", `${block}\n  traefik:\n`);
+  const compose = getFile(files, "docker-compose.yml").replace(
+    "\n  traefik:\n",
+    `${block}\n  traefik:\n`,
+  );
   setFile(files, "docker-compose.yml", compose);
 }
 
@@ -727,15 +803,15 @@ function appendTraefikRoute(
         prefix: /api/${serviceName}/v1
 `;
   routes = routes.replace("\n  services:\n", `${routerBlock}\n  services:\n`);
-  routes = routes.replace("\n  middlewares:\n", `${serviceBlock}\n  middlewares:\n`);
+  routes = routes.replace(
+    "\n  middlewares:\n",
+    `${serviceBlock}\n  middlewares:\n`,
+  );
   routes = `${routes.trimEnd()}\n${middlewareBlock}`;
   setFile(files, "traefik/dynamic/routes.yml", routes);
 }
 
-function scaffoldService(
-  files: Map<string, string>,
-  spec: ServiceSpec,
-): void {
+function scaffoldService(files: Map<string, string>, spec: ServiceSpec): void {
   const entity = spec.name;
   const serviceName = `${entity}-service`;
   const entityPascal = pascalCase(entity);
@@ -830,7 +906,11 @@ function scaffoldService(
       );
     }
     if (path === `${targetPrefix}Dockerfile`) {
-      content = replaceAllLiteral(content, "EXPOSE 7705", `EXPOSE ${spec.httpPort}`);
+      content = replaceAllLiteral(
+        content,
+        "EXPOSE 7705",
+        `EXPOSE ${spec.httpPort}`,
+      );
     }
     if (path === `${targetPrefix}openapi.yaml`) {
       content = replaceAllLiteral(
@@ -851,7 +931,13 @@ function scaffoldService(
 
   appendComposeService(files, serviceName, spec.httpPort, spec.db);
   appendTraefikRoute(files, entity, serviceName, spec.httpPort);
-  updateServiceConfig(files, serviceName, spec.httpPort, spec.grpcPort, spec.db);
+  updateServiceConfig(
+    files,
+    serviceName,
+    spec.httpPort,
+    spec.grpcPort,
+    spec.db,
+  );
 }
 
 async function buildProjectZip(
@@ -928,7 +1014,8 @@ async function generateProject(event: SubmitEvent): Promise<void> {
     downloadBlob(`${request.projectName}.zip`, zipBlob);
     setStatus("Project generated. Download should start automatically.");
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Generation failed.";
+    const message =
+      error instanceof Error ? error.message : "Generation failed.";
     setStatus(message, true);
   } finally {
     buttonEl.disabled = false;
