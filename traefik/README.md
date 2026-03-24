@@ -21,6 +21,7 @@ Traefik applies:
 - rate limiting
 - access logging
 - `ForwardAuth` protection on `/api/v1/user...`
+- `/api/v1/auth...` is public at the Traefik layer
 - file-based routing config from `traefik/dynamic/*.yml`
 
 ## Auth flow

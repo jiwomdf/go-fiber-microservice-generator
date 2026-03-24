@@ -17,7 +17,7 @@ http:
       middlewares:
         - auth-strip-v1
         - auth-addprefix
-        - protected-common
+        - public-common
       service: auth-service
 
     user-api:
