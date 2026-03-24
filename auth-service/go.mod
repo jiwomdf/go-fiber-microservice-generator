@@ -5,6 +5,7 @@ go 1.25.1
 require (
 	github.com/gofiber/fiber/v2 v2.52.12
 	github.com/spf13/viper v1.21.0
+	golang.org/x/crypto v0.47.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -21,7 +22,6 @@ require (
 	github.com/lib/pq v1.10.9 // indirect
 	go.opentelemetry.io/otel/metric v1.40.0 // indirect
 	go.opentelemetry.io/otel/trace v1.40.0 // indirect
-	golang.org/x/crypto v0.47.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 )
 

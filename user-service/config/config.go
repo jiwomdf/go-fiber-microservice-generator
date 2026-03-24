@@ -26,6 +26,8 @@ func ReadConfig(configFile string) {
 	viper.AddConfigPath("/")
 	viper.AddConfigPath("/usr/local/etc/")
 	viper.AddConfigPath(".")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AutomaticEnv()
 	rt := reflect.TypeOf(DefaultConfig).Elem()
 	rv := reflect.ValueOf(DefaultConfig).Elem()
 	for i := 0; i < rt.NumField(); i++ {

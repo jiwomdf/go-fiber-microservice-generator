@@ -1,34 +1,14 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: micro-postgres
-    environment:
-      POSTGRES_DB: fiber_microservice
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin1234
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d fiber_microservice"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-
   auth-service:
     build:
       context: ./auth-service
     container_name: auth-service
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
-      POSTGRES_HOST: postgres
+      POSTGRES_HOST: host.docker.internal
       POSTGRES_PORT: "5432"
-      POSTGRES_DATABASE: fiber_microservice
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin1234
+      POSTGRES_DATABASE: belajarmudah
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ""
       POSTGRES_SCHEMA: public
       SERVER_HTTP_PORT: "7704"
     ports:
@@ -38,15 +18,12 @@ services:
     build:
       context: ./user-service
     container_name: user-service
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
-      POSTGRES_HOST: postgres
+      POSTGRES_HOST: host.docker.internal
       POSTGRES_PORT: "5432"
-      POSTGRES_DATABASE: fiber_microservice
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin1234
+      POSTGRES_DATABASE: belajarmudah
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ""
       POSTGRES_SCHEMA: public
       SERVER_HTTP_PORT: "7705"
     ports:
@@ -72,6 +49,3 @@ services:
       - "8001:8001"
     volumes:
       - ./kong/kong.yml:/usr/local/kong/declarative/kong.yml:ro
-
-volumes:
-  postgres-data:

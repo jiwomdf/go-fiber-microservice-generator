@@ -2,10 +2,11 @@
 
 This stack runs:
 
-- `postgres` for both services
 - `auth-service` on `:7704`
 - `user-service` on `:7705`
 - `kong` on `:8000` with the admin API on `:8001`
+
+For local Docker on macOS, both services connect to your existing host Postgres via `host.docker.internal`.
 
 ## Routes
 
@@ -44,6 +45,14 @@ Change both before using this outside local development.
 ```bash
 docker compose up --build
 ```
+
+Expected local DB settings from Docker Compose:
+
+- host: `host.docker.internal`
+- port: `5432`
+- database: `belajarmudah`
+- user: `postgres`
+- password: empty
 
 ## Example flow
 
