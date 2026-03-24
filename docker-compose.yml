@@ -1,12 +1,4 @@
 services:
-  generator-web:
-    build:
-      context: .
-      dockerfile: generator-web/Dockerfile
-    container_name: generator-web
-    ports:
-      - "8090:8090"
-
   auth-service:
     build:
       context: ./auth-service
@@ -41,7 +33,6 @@ services:
     image: traefik:v3.1
     container_name: micro-traefik
     depends_on:
-      - generator-web
       - auth-service
       - user-service
     command:

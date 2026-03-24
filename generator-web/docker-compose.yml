@@ -1,0 +1,8 @@
+services:
+  generator-web:
+    build:
+      context: ..
+      dockerfile: generator-web/Dockerfile
+    container_name: generator-web
+    ports:
+      - "8090:8090"
