@@ -37,6 +37,7 @@ var (
 	StatusForbiddenWrongHotelID         = StatusCodePrefix + "40304"
 	StatusConflict                      = StatusCodePrefix + "40900"
 	StatusWordsAlreadyExist             = StatusCodePrefix + "40901"
+	StatusInvalidEmailPassword          = StatusCodePrefix + "40051"
 )
 
 var (

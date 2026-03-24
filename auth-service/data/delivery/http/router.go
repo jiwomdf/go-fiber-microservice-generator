@@ -23,5 +23,10 @@ func RouterAPI(
 	v1 := api.Group("/v1")     // e.g., /api/auth-service/v1
 
 	// 1. Auth Routes
-	v1.Post("/login", middleware.AuthMiddleware(), resourceHandler.CreateAuth)
+	v1.Post("/login", middleware.AuthMiddleware(), resourceHandler.Login)
+	v1.Post("/auth", middleware.AuthMiddleware(), resourceHandler.CreateAuth)
+	v1.Get("/auth", middleware.AuthMiddleware(), resourceHandler.GetAllAuths)
+	v1.Get("/auth/:id", middleware.AuthMiddleware(), resourceHandler.GetAuthById)
+	v1.Patch("/auth/:id", middleware.AuthMiddleware(), resourceHandler.UpdateAuth)
+	v1.Delete("/auth/:id", middleware.AuthMiddleware(), resourceHandler.DeleteAuth)
 }

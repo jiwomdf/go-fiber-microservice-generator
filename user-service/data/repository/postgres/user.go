@@ -61,7 +61,7 @@ func (u *UserRepo) GetUserById(ctx context.Context, id string) (*domain.User, st
 func (u *UserRepo) UpdateUser(ctx context.Context, id string, updates map[string]any) (*domain.User, string, error) {
 	var entity domain.User
 
-	err := u.Conn.WithContext(ctx).Model(&entity).Updates(updates).Where("id = ?", id).Error
+	err := u.Conn.WithContext(ctx).Model(&entity).Where("id = ?", id).Updates(updates).Error
 	if err != nil {
 		return nil, domain.StatusInternalServerError, err
 	}
