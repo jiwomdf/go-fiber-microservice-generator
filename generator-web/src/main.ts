@@ -522,6 +522,7 @@ function updateComposeServiceEnv(
   const lines = getFile(files, path).split("\n");
   let currentService = "";
   let inEnvironment = false;
+  let inPorts = false;
 
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index];
@@ -529,6 +530,7 @@ function updateComposeServiceEnv(
     if (match) {
       currentService = match[1];
       inEnvironment = false;
+      inPorts = false;
       continue;
     }
 
@@ -539,15 +541,27 @@ function updateComposeServiceEnv(
     const trimmed = line.trim();
     if (line.startsWith("    environment:")) {
       inEnvironment = true;
+      inPorts = false;
+      continue;
+    }
+    if (line.startsWith("    ports:")) {
+      inPorts = true;
+      inEnvironment = false;
       continue;
     }
     if (inEnvironment && line.startsWith("    ") && !line.startsWith("      ")) {
       inEnvironment = false;
     }
+    if (inPorts && line.startsWith("    ") && !line.startsWith("      ")) {
+      inPorts = false;
+    }
     if (!inEnvironment) {
-      if (line.startsWith("      - \"")) {
+      if (inPorts && line.startsWith("      - \"")) {
         lines[index] = `      - "${httpPort}:${httpPort}"`;
         break;
+      }
+      if (line.startsWith("      - \"")) {
+        continue;
       }
       continue;
     }
