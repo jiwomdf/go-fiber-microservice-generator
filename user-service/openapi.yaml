@@ -1,0 +1,289 @@
+openapi: 3.0.3
+info:
+  title: Fiber Microservice API
+  version: 1.0.0
+  description: OpenAPI specification for the current Fiber microservice user endpoints.
+
+servers:
+  - url: http://localhost:7704/api/user-service/v1
+    description: Default API base path
+
+tags:
+  - name: Users
+    description: User management endpoints
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Status:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: AS20000
+        message:
+          type: string
+          example: Success
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 9f6cf9fc-f6fd-4f5c-b4ff-f24ffb9a4017
+        name:
+          type: string
+          example: Jane Doe
+        email:
+          type: string
+          format: email
+          example: jane@example.com
+
+    CreateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Jane Doe
+        email:
+          type: string
+          format: email
+          example: jane@example.com
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Jane Updated
+        email:
+          type: string
+          format: email
+          example: jane.updated@example.com
+
+    UserResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: "#/components/schemas/Status"
+        meta:
+          nullable: true
+        data:
+          $ref: "#/components/schemas/User"
+
+    UserListResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: "#/components/schemas/Status"
+        meta:
+          nullable: true
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+
+    EmptyResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: "#/components/schemas/Status"
+        meta:
+          nullable: true
+        data:
+          nullable: true
+
+paths:
+  /user:
+    post:
+      tags:
+        - Users
+      summary: Create user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+
+    get:
+      tags:
+        - Users
+      summary: Get all users
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+
+  /user/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+
+    patch:
+      tags:
+        - Users
+      summary: Update user by ID
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+
+    delete:
+      tags:
+        - Users
+      summary: Delete user by ID
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"

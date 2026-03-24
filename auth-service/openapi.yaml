@@ -1,0 +1,289 @@
+openapi: 3.0.3
+info:
+  title: Fiber Microservice API
+  version: 1.0.0
+  description: OpenAPI specification for the current Fiber microservice auth endpoints.
+
+servers:
+  - url: http://localhost:7704/api/auth-service/v1
+    description: Default API base path
+
+tags:
+  - name: Auths
+    description: Auth management endpoints
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Status:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: AS20000
+        message:
+          type: string
+          example: Success
+
+    Auth:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 9f6cf9fc-f6fd-4f5c-b4ff-f24ffb9a4017
+        name:
+          type: string
+          example: Jane Doe
+        email:
+          type: string
+          format: email
+          example: jane@example.com
+
+    CreateAuthRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Jane Doe
+        email:
+          type: string
+          format: email
+          example: jane@example.com
+
+    UpdateAuthRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Jane Updated
+        email:
+          type: string
+          format: email
+          example: jane.updated@example.com
+
+    AuthResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: "#/components/schemas/Status"
+        meta:
+          nullable: true
+        data:
+          $ref: "#/components/schemas/Auth"
+
+    AuthListResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: "#/components/schemas/Status"
+        meta:
+          nullable: true
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Auth"
+
+    EmptyResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: "#/components/schemas/Status"
+        meta:
+          nullable: true
+        data:
+          nullable: true
+
+paths:
+  /auth:
+    post:
+      tags:
+        - Auths
+      summary: Create auth
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAuthRequest"
+      responses:
+        "201":
+          description: Auth created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+
+    get:
+      tags:
+        - Auths
+      summary: Get all auths
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Auths retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthListResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+
+  /auth/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - Auths
+      summary: Get auth by ID
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Auth retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "404":
+          description: Auth not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+
+    patch:
+      tags:
+        - Auths
+      summary: Update auth by ID
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAuthRequest"
+      responses:
+        "200":
+          description: Auth updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "404":
+          description: Auth not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+
+    delete:
+      tags:
+        - Auths
+      summary: Delete auth by ID
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Auth deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "404":
+          description: Auth not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptyResponse"

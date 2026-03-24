@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package data;
+
+option go_package = "user-service/data/delivery/grpc/proto;proto";
+
+service UserService {
+  rpc CreateUser(CreateUserRequest) returns (UserResponse);
+  rpc GetAllUsers(Empty) returns (UserListResponse);
+  rpc GetUserById(GetUserByIdRequest) returns (UserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+}
+
+message Empty {}
+
+message User {
+  int64  id    = 1;
+  string name  = 2;
+  string email = 3;
+}
+
+message CreateUserRequest {
+  string name  = 1;
+  string email = 2;
+}
+
+message GetUserByIdRequest {
+  string id = 1;
+}
+
+message UpdateUserRequest {
+  string id    = 1;
+  string name  = 2;
+  string email = 3;
+}
+
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message UserResponse {
+  User   data    = 1;
+  string status  = 2;
+  string message = 3;
+}
+
+message UserListResponse {
+  repeated User data    = 1;
+  string        status  = 2;
+  string        message = 3;
+}
+
+message DeleteUserResponse {
+  string status  = 1;
+  string message = 2;
+}

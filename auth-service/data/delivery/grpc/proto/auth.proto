@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package data;
+
+option go_package = "auth-service/data/delivery/grpc/proto;proto";
+
+service AuthService {
+  rpc CreateAuth(CreateAuthRequest) returns (AuthResponse);
+  rpc GetAllAuths(Empty) returns (AuthListResponse);
+  rpc GetAuthById(GetAuthByIdRequest) returns (AuthResponse);
+  rpc UpdateAuth(UpdateAuthRequest) returns (AuthResponse);
+  rpc DeleteAuth(DeleteAuthRequest) returns (DeleteAuthResponse);
+}
+
+message Empty {}
+
+message Auth {
+  int64  id    = 1;
+  string name  = 2;
+  string email = 3;
+}
+
+message CreateAuthRequest {
+  string name  = 1;
+  string email = 2;
+}
+
+message GetAuthByIdRequest {
+  string id = 1;
+}
+
+message UpdateAuthRequest {
+  string id    = 1;
+  string name  = 2;
+  string email = 3;
+}
+
+message DeleteAuthRequest {
+  string id = 1;
+}
+
+message AuthResponse {
+  Auth   data    = 1;
+  string status  = 2;
+  string message = 3;
+}
+
+message AuthListResponse {
+  repeated Auth data    = 1;
+  string        status  = 2;
+  string        message = 3;
+}
+
+message DeleteAuthResponse {
+  string status  = 1;
+  string message = 2;
+}

@@ -1,0 +1,39 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Your service binary
+user-service
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+*.cover
+
+# Dependency directories
+# Although with Go Modules, the vendor directory is often not needed in git
+vendor/
+
+# IDE-specific folders
+.idea/
+.vscode/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Environment and local configuration files
+.env
+config.yaml
+config.local.yaml
+config.prod.yaml
+
+*.csv

@@ -1,0 +1,59 @@
+server:
+  base_path: "/api/user-service"
+  log_type: json
+  log_level: debug
+  http:
+    port: "7704"
+    prefork: false
+    strict_routing: false
+    case_sensitive: false
+    body_limit: 1048576
+    concurrency: 262144
+    timeout:
+      read: 5ns
+      write: 10ns
+      idle: 120ns
+    allow_origins: "*"
+    allow_methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+    allow_headers: "Origin, Content-Type, Accept, Authorization, X-Roles, X-Scopes, X-User-ID, X-Tenant-ID, X-Super-Tenant-ID"
+    base_url: "http:localhost:7704/login"
+    cache_static_ttl: 86400
+  grpc_port: "57704"
+
+postgres:
+  host: "localhost"
+  port: "5432"
+  database: "fiber_microservice"
+  user: "admin"
+  password: "admin1234"
+  path_migrate: "file://migration"
+  timezone: "UTC"
+  set_max_open_conns: 0
+  set_max_idle_conns: 2
+  set_conn_max_idle_time: 0
+  set_conn_max_lifetime: 0
+  schema: "servicename"
+  sslmode: "disable"
+
+smtp:
+  mail: "test@mail.id"
+  port: 587
+  email_sender: "no-reply@mail.id"
+  password: "testmail123"
+default_limit_query: 100
+default_user_role_create_tenant: ADMIN
+client_id: user-service
+
+grpc_client:
+  other_service:
+    host: "localhost"
+    port: "57710"
+  init: 5
+  capacity: 50
+  idle_duration: 60 # Dalam detik
+  max_life_duration: 60 # Dalam detik
+
+tracer:
+  service_name: user-service
+  collector_endpoint_grpc: localhost:4317
+  enable_exporter: false
