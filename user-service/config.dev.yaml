@@ -3,7 +3,7 @@ server:
   log_type: json
   log_level: debug
   http:
-    port: "7704"
+    port: "7705"
     prefork: false
     strict_routing: false
     case_sensitive: false
@@ -18,21 +18,21 @@ server:
     allow_headers: "Origin, Content-Type, Accept, Authorization, X-Roles, X-Scopes, X-User-ID, X-Tenant-ID, X-Super-Tenant-ID"
     base_url: "http:localhost:7704/login"
     cache_static_ttl: 86400
-  grpc_port: "57704"
+  grpc_port: "57705"
 
 postgres:
   host: "localhost"
   port: "5432"
-  database: "fiber_microservice"
-  user: "admin"
-  password: "admin1234"
+  database: "belajarmudah"
+  user: "postgres"
+  password: ""
   path_migrate: "file://migration"
   timezone: "UTC"
   set_max_open_conns: 0
   set_max_idle_conns: 2
   set_conn_max_idle_time: 0
   set_conn_max_lifetime: 0
-  schema: "servicename"
+  schema: "public"
   sslmode: "disable"
 
 smtp:

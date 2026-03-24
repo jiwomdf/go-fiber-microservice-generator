@@ -17,10 +17,16 @@ func BuildLoginResponse(email string) (*domain.LoginResponse, string, error) {
 func buildTokenResponse(email string, tokenType string, expSecond time.Duration) (*domain.LoginResponse, string, error) {
 	expTime := time.Now().Add(expSecond)
 	expTimeStr := expTime.Format("2006-01-02T15:04:05-0700")
+	issuer := viper.GetString(helper.ClientID)
+	if issuer == "" {
+		issuer = "auth-service"
+	}
 
 	claims := jwt.MapClaims{
 		helper.TokenType: tokenType,
 		helper.Exp:       expTime.Unix(),
+		helper.Iss:       issuer,
+		helper.Sub:       email,
 	}
 
 	t := jwt.NewWithClaims(jwt.GetSigningMethod(viper.GetString(helper.JWT_SIGNING_METHOD)), claims)

@@ -22,8 +22,8 @@ type UpdateAuthRequest struct {
 }
 
 type Auth struct {
-	Email    string `json:"email"`
-	Password string `json:"-"`
+	Email    string `json:"email" gorm:"column:email"`
+	Password string `json:"-" gorm:"column:hashed_password"`
 }
 
 func (*Auth) TableName() string {

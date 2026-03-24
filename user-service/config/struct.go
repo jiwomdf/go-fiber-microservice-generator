@@ -236,22 +236,6 @@ var DefaultConfig = &Config{
 	DefaultLimitQuery: 100,
 	ClientID:          "user",
 	GRPCClient: GRPCClient{
-		AdministrativeDivisionService: HostPort{
-			Host: "localhost",
-			Port: "56106",
-		},
-		ConfigurationService: HostPort{
-			Host: "localhost",
-			Port: "57710",
-		},
-		IdentityService: HostPort{
-			Host: "localhost",
-			Port: "57703",
-		},
-		BillingService: HostPort{
-			Host: "localhost",
-			Port: "57711",
-		},
 		Init:            5,
 		Capacity:        50,
 		IdleDuration:    60,

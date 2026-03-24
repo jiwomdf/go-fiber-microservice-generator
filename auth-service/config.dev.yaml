@@ -23,16 +23,16 @@ server:
 postgres:
   host: "localhost"
   port: "5432"
-  database: "fiber_microservice"
-  user: "admin"
-  password: "admin1234"
+  database: "belajarmudah"
+  user: "postgres"
+  password: ""
   path_migrate: "file://migration"
   timezone: "UTC"
   set_max_open_conns: 0
   set_max_idle_conns: 2
   set_conn_max_idle_time: 0
   set_conn_max_lifetime: 0
-  schema: "servicename"
+  schema: "public"
   sslmode: "disable"
 
 smtp:
@@ -43,6 +43,13 @@ smtp:
 default_limit_query: 100
 default_user_role_create_tenant: ADMIN
 client_id: auth-service
+
+jwt:
+  expiration: 3600
+  signing_method: "HS256"
+  signature_key: "b7f9c2e4a1d84f6b9c3e7a2d5f1b8c6e9a0d3f7c2b5e8a1d4c6f9b2e7a3d5c1"
+  expiration_temp: 600
+  expiration_machine: 3600
 
 grpc_client:
   other_service:
