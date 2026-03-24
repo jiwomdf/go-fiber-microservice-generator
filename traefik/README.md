@@ -50,6 +50,6 @@ Expected local DB settings from Docker Compose:
 
 - host: `host.docker.internal`
 - port: `5432`
-- database: `belajarmudah`
+- database: `somedb`
 - user: `postgres`
 - password: empty

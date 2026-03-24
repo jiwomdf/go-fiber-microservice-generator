@@ -88,7 +88,7 @@ block = f"""
     environment:
       POSTGRES_HOST: host.docker.internal
       POSTGRES_PORT: "5432"
-      POSTGRES_DATABASE: belajarmudah
+      POSTGRES_DATABASE: somedb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ""
       POSTGRES_SCHEMA: public
@@ -205,7 +205,10 @@ entity_upper="$(printf '%s' "$entity" | tr '[:lower:]' '[:upper:]')"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
-source_dir="$repo_root/user-service"
+source_dir="$repo_root/templates/service-template"
+if [[ ! -d "$source_dir" ]]; then
+  source_dir="$repo_root/user-service"
+fi
 output_dir="${2:-$repo_root/$service_name}"
 target_dir="$(cd "$(dirname "$output_dir")" && pwd)/$(basename "$output_dir")"
 

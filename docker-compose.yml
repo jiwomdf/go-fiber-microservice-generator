@@ -14,7 +14,7 @@ services:
     environment:
       POSTGRES_HOST: host.docker.internal
       POSTGRES_PORT: "5432"
-      POSTGRES_DATABASE: belajarmudah
+      POSTGRES_DATABASE: somedb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ""
       POSTGRES_SCHEMA: public
@@ -29,7 +29,7 @@ services:
     environment:
       POSTGRES_HOST: host.docker.internal
       POSTGRES_PORT: "5432"
-      POSTGRES_DATABASE: belajarmudah
+      POSTGRES_DATABASE: somedb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ""
       POSTGRES_SCHEMA: public

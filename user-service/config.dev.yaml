@@ -23,7 +23,7 @@ server:
 postgres:
   host: "localhost"
   port: "5432"
-  database: "belajarmudah"
+  database: "somedb"
   user: "postgres"
   password: ""
   path_migrate: "file://migration"

@@ -71,13 +71,13 @@ func handleGenerate(w http.ResponseWriter, r *http.Request, repoRoot string) {
 		return
 	}
 
-	projectName, authGRPCPort, userGRPCPort, authDB, userDB, services, err := normalizeRequest(req, repoRoot)
+	projectName, traefikPort, authHTTPPort, authGRPCPort, services, authDB, err := normalizeRequest(req, repoRoot)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	archiveName, zipData, err := buildProjectArchive(repoRoot, projectName, authGRPCPort, userGRPCPort, authDB, userDB, services)
+	archiveName, zipData, err := buildProjectArchive(repoRoot, projectName, traefikPort, authHTTPPort, authGRPCPort, authDB, services)
 	if err != nil {
 		log.Printf("generate failed: %v", err)
 		http.Error(w, "failed to generate project", http.StatusInternalServerError)
@@ -97,52 +97,51 @@ type serviceSpec struct {
 	DB       domain.DatabaseConfig
 }
 
-func normalizeRequest(req domain.GenerateRequest, repoRoot string) (string, int, int, domain.DatabaseConfig, domain.DatabaseConfig, []serviceSpec, error) {
+func normalizeRequest(req domain.GenerateRequest, repoRoot string) (string, int, int, int, []serviceSpec, domain.DatabaseConfig, error) {
 	projectName := slugify(req.ProjectName)
 	if projectName == "" {
-		return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, errors.New("project name is required")
+		return "", 0, 0, 0, nil, domain.DatabaseConfig{}, errors.New("project name is required")
 	}
 
-	if len(req.Services) == 0 {
-		return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, errors.New("at least one service is required")
-	}
 	if len(req.Services) > 20 {
-		return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, errors.New("too many services requested")
+		return "", 0, 0, 0, nil, domain.DatabaseConfig{}, errors.New("too many services requested")
 	}
 
 	authDB, err := normalizeDBConfig("auth-service", req.AuthDB)
 	if err != nil {
-		return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, err
-	}
-
-	userDB, err := normalizeDBConfig("user-service", req.UserDB)
-	if err != nil {
-		return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, err
+		return "", 0, 0, 0, nil, domain.DatabaseConfig{}, err
 	}
 
 	existingHTTPPorts, existingGRPCPorts, err := existingPorts(repoRoot)
 	if err != nil {
-		return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, err
+		return "", 0, 0, 0, nil, domain.DatabaseConfig{}, err
+	}
+
+	traefikPort, err := parsePort(req.TraefikPort, 1, 65535)
+	if err != nil {
+		return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("traefik port: %w", err)
+	}
+	if traefikPort == 0 {
+		traefikPort = 8000
+	}
+
+	authHTTPPort, err := parsePort(req.AuthHTTPPort, 7000, 7999)
+	if err != nil {
+		return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("auth-service http port: %w", err)
+	}
+	if authHTTPPort == 0 {
+		authHTTPPort = 7704
 	}
 
 	authGRPCPort, err := parsePort(req.AuthGRPCPort, 57000, 59999)
 	if err != nil {
-		return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("auth-service grpc port: %w", err)
+		return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("auth-service grpc port: %w", err)
 	}
 	if authGRPCPort == 0 {
 		authGRPCPort = 57704
 	}
-
-	userGRPCPort, err := parsePort(req.UserGRPCPort, 57000, 59999)
-	if err != nil {
-		return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("user-service grpc port: %w", err)
-	}
-	if userGRPCPort == 0 {
-		userGRPCPort = 57705
-	}
-
-	if authGRPCPort == userGRPCPort {
-		return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, errors.New("auth-service and user-service grpc ports must be different")
+	if traefikPort == authHTTPPort {
+		return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("traefik port already in use: %d", traefikPort)
 	}
 
 	nextHTTPPort := nextPort(existingHTTPPorts, 7703)
@@ -155,54 +154,60 @@ func normalizeRequest(req domain.GenerateRequest, repoRoot string) (string, int,
 	for _, raw := range req.Services {
 		service := slugify(raw.Name)
 		if service == "" {
-			return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, errors.New("service names must contain letters or numbers")
+			return "", 0, 0, 0, nil, domain.DatabaseConfig{}, errors.New("service names must contain letters or numbers")
 		}
-		if service == "auth" || service == "user" {
-			return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("%q is reserved because the base project already contains %s-service", service, service)
+		if service == "auth" {
+			return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("%q is reserved because the base project already contains %s-service", service, service)
 		}
 		if _, ok := seenNames[service]; ok {
-			return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("duplicate service name: %s", service)
+			return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("duplicate service name: %s", service)
 		}
 
 		httpPort, err := parsePort(raw.HTTPPort, 7000, 7999)
 		if err != nil {
-			return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("%s http port: %w", service, err)
+			return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("%s http port: %w", service, err)
 		}
 		if httpPort == 0 {
 			httpPort = nextUnusedPort(nextHTTPPort, existingHTTPPorts, seenHTTP)
 			nextHTTPPort = httpPort + 1
 		} else {
 			if _, ok := existingHTTPPorts[httpPort]; ok {
-				return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("http port already in use: %d", httpPort)
+				return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("http port already in use: %d", httpPort)
 			}
 			if _, ok := seenHTTP[httpPort]; ok {
-				return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("duplicate http port in request: %d", httpPort)
+				return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("duplicate http port in request: %d", httpPort)
 			}
+		}
+		if httpPort == authHTTPPort {
+			return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("http port already in use: %d", httpPort)
+		}
+		if httpPort == traefikPort {
+			return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("traefik port already in use: %d", traefikPort)
 		}
 
 		grpcPort, err := parsePort(raw.GRPCPort, 57000, 59999)
 		if err != nil {
-			return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("%s grpc port: %w", service, err)
+			return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("%s grpc port: %w", service, err)
 		}
 		if grpcPort == 0 {
 			grpcPort = nextUnusedPort(nextGRPCPort, existingGRPCPorts, seenGRPC)
 			nextGRPCPort = grpcPort + 1
 		} else {
 			if _, ok := existingGRPCPorts[grpcPort]; ok {
-				return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("grpc port already in use: %d", grpcPort)
+				return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("grpc port already in use: %d", grpcPort)
 			}
 			if _, ok := seenGRPC[grpcPort]; ok {
-				return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("duplicate grpc port in request: %d", grpcPort)
+				return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("duplicate grpc port in request: %d", grpcPort)
 			}
 		}
 
 		dbConfig, err := normalizeDBConfig(service+"-service", raw.DB)
 		if err != nil {
-			return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, err
+			return "", 0, 0, 0, nil, domain.DatabaseConfig{}, err
 		}
 
-		if grpcPort == authGRPCPort || grpcPort == userGRPCPort {
-			return "", 0, 0, domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("grpc port already in use: %d", grpcPort)
+		if grpcPort == authGRPCPort {
+			return "", 0, 0, 0, nil, domain.DatabaseConfig{}, fmt.Errorf("grpc port already in use: %d", grpcPort)
 		}
 
 		seenNames[service] = struct{}{}
@@ -216,10 +221,10 @@ func normalizeRequest(req domain.GenerateRequest, repoRoot string) (string, int,
 		})
 	}
 
-	return projectName, authGRPCPort, userGRPCPort, authDB, userDB, services, nil
+	return projectName, traefikPort, authHTTPPort, authGRPCPort, services, authDB, nil
 }
 
-func buildProjectArchive(repoRoot, projectName string, authGRPCPort, userGRPCPort int, authDB, userDB domain.DatabaseConfig, services []serviceSpec) (string, []byte, error) {
+func buildProjectArchive(repoRoot, projectName string, traefikPort, authHTTPPort, authGRPCPort int, authDB domain.DatabaseConfig, services []serviceSpec) (string, []byte, error) {
 	tempRoot, err := os.MkdirTemp("", "service-generator-*")
 	if err != nil {
 		return "", nil, err
@@ -235,10 +240,19 @@ func buildProjectArchive(repoRoot, projectName string, authGRPCPort, userGRPCPor
 		return "", nil, err
 	}
 
-	if err := updateServiceConfig(projectDir, "auth-service", authGRPCPort, authDB); err != nil {
+	if err := updateServiceConfig(projectDir, "auth-service", authHTTPPort, authGRPCPort, authDB); err != nil {
 		return "", nil, err
 	}
-	if err := updateServiceConfig(projectDir, "user-service", userGRPCPort, userDB); err != nil {
+	if err := prepareServiceTemplate(projectDir); err != nil {
+		return "", nil, err
+	}
+	if err := removeGeneratedUserService(projectDir); err != nil {
+		return "", nil, err
+	}
+	if err := updateTraefikBasePorts(projectDir, authHTTPPort); err != nil {
+		return "", nil, err
+	}
+	if err := updateTraefikPort(projectDir, traefikPort); err != nil {
 		return "", nil, err
 	}
 
@@ -256,7 +270,7 @@ func buildProjectArchive(repoRoot, projectName string, authGRPCPort, userGRPCPor
 			return "", nil, fmt.Errorf("scaffold %s failed: %w: %s", service.Name, err, strings.TrimSpace(string(output)))
 		}
 
-		if err := updateServiceConfig(projectDir, service.Name+"-service", service.GRPCPort, service.DB); err != nil {
+		if err := updateServiceConfig(projectDir, service.Name+"-service", service.HTTPPort, service.GRPCPort, service.DB); err != nil {
 			return "", nil, err
 		}
 	}
@@ -311,21 +325,21 @@ func parsePort(raw string, min, max int) (int, error) {
 	return port, nil
 }
 
-func updateServiceConfig(projectDir, serviceName string, grpcPort int, db domain.DatabaseConfig) error {
+func updateServiceConfig(projectDir, serviceName string, httpPort, grpcPort int, db domain.DatabaseConfig) error {
 	serviceDir := filepath.Join(projectDir, serviceName)
 	for _, configFile := range []string{
 		filepath.Join(serviceDir, "config.dev.yaml"),
 		filepath.Join(serviceDir, "config.local.yaml"),
 	} {
-		if err := updateConfigSettings(configFile, grpcPort, db); err != nil {
+		if err := updateConfigSettings(configFile, httpPort, grpcPort, db); err != nil {
 			return err
 		}
 	}
 
-	return updateComposeDatabaseEnv(filepath.Join(projectDir, "docker-compose.yml"), serviceName, db)
+	return updateComposeServiceEnv(filepath.Join(projectDir, "docker-compose.yml"), serviceName, httpPort, db)
 }
 
-func updateConfigSettings(path string, grpcPort int, db domain.DatabaseConfig) error {
+func updateConfigSettings(path string, httpPort, grpcPort int, db domain.DatabaseConfig) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -335,6 +349,9 @@ func updateConfigSettings(path string, grpcPort int, db domain.DatabaseConfig) e
 	inPostgres := false
 	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "port:") && strings.HasPrefix(line, "    ") {
+			lines[i] = `    port: "` + strconv.Itoa(httpPort) + `"`
+		}
 		if strings.HasPrefix(trimmed, "grpc_port:") {
 			lines[i] = `  grpc_port: "` + strconv.Itoa(grpcPort) + `"`
 		}
@@ -366,7 +383,7 @@ func updateConfigSettings(path string, grpcPort int, db domain.DatabaseConfig) e
 	return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o644)
 }
 
-func updateComposeDatabaseEnv(path, serviceName string, db domain.DatabaseConfig) error {
+func updateComposeServiceEnv(path, serviceName string, httpPort int, db domain.DatabaseConfig) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -411,10 +428,147 @@ func updateComposeDatabaseEnv(path, serviceName string, db domain.DatabaseConfig
 			lines[i] = `      POSTGRES_USER: "` + db.Username + `"`
 		case strings.HasPrefix(trimmed, "POSTGRES_PASSWORD:"):
 			lines[i] = `      POSTGRES_PASSWORD: "` + db.Password + `"`
+		case strings.HasPrefix(trimmed, "SERVER_HTTP_PORT:"):
+			lines[i] = `      SERVER_HTTP_PORT: "` + strconv.Itoa(httpPort) + `"`
+		}
+	}
+
+	for i, line := range lines {
+		if strings.TrimSpace(line) == `- "7704:7704"` || strings.TrimSpace(line) == `- "7705:7705"` || strings.TrimSpace(line) == `- "`+strconv.Itoa(httpPort)+`:`+strconv.Itoa(httpPort)+`"` {
+			_ = i
+		}
+	}
+
+	currentService = ""
+	for i, line := range lines {
+		if match := serviceLinePattern.FindStringSubmatch(line); match != nil {
+			currentService = match[1]
+			continue
+		}
+		if currentService != serviceName {
+			continue
+		}
+		if strings.HasPrefix(strings.TrimSpace(line), `- "`) && strings.HasPrefix(line, "      ") {
+			lines[i] = `      - "` + strconv.Itoa(httpPort) + `:` + strconv.Itoa(httpPort) + `"`
+			break
 		}
 	}
 
 	return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o644)
+}
+
+func updateTraefikBasePorts(projectDir string, authHTTPPort int) error {
+	routesPath := filepath.Join(projectDir, "traefik", "dynamic", "routes.yml")
+	middlewaresPath := filepath.Join(projectDir, "traefik", "dynamic", "middlewares.yml")
+
+	routesData, err := os.ReadFile(routesPath)
+	if err != nil {
+		return err
+	}
+	routes := string(routesData)
+	routes = strings.ReplaceAll(routes, "http://auth-service:7704", "http://auth-service:"+strconv.Itoa(authHTTPPort))
+	if err := os.WriteFile(routesPath, []byte(routes), 0o644); err != nil {
+		return err
+	}
+
+	middlewaresData, err := os.ReadFile(middlewaresPath)
+	if err != nil {
+		return err
+	}
+	middlewares := strings.ReplaceAll(string(middlewaresData), "http://auth-service:7704", "http://auth-service:"+strconv.Itoa(authHTTPPort))
+	return os.WriteFile(middlewaresPath, []byte(middlewares), 0o644)
+}
+
+func prepareServiceTemplate(projectDir string) error {
+	sourceDir := filepath.Join(projectDir, "user-service")
+	if _, err := os.Stat(sourceDir); err != nil {
+		return err
+	}
+
+	templateDir := filepath.Join(projectDir, "templates", "service-template")
+	if err := os.MkdirAll(filepath.Dir(templateDir), 0o755); err != nil {
+		return err
+	}
+
+	return os.Rename(sourceDir, templateDir)
+}
+
+func removeGeneratedUserService(projectDir string) error {
+	composePath := filepath.Join(projectDir, "docker-compose.yml")
+	composeData, err := os.ReadFile(composePath)
+	if err != nil {
+		return err
+	}
+	compose := string(composeData)
+	userComposeBlock := `
+  user-service:
+    build:
+      context: ./user-service
+    container_name: user-service
+    environment:
+      POSTGRES_HOST: host.docker.internal
+      POSTGRES_PORT: "5432"
+      POSTGRES_DATABASE: somedb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ""
+      POSTGRES_SCHEMA: public
+      SERVER_HTTP_PORT: "7705"
+    ports:
+      - "7705:7705"
+`
+	compose = strings.Replace(compose, userComposeBlock, "", 1)
+	compose = strings.Replace(compose, "\n      - user-service", "", 1)
+	if err := os.WriteFile(composePath, []byte(compose), 0o644); err != nil {
+		return err
+	}
+
+	routesPath := filepath.Join(projectDir, "traefik", "dynamic", "routes.yml")
+	routesData, err := os.ReadFile(routesPath)
+	if err != nil {
+		return err
+	}
+	routes := string(routesData)
+	userRouterBlock := "\n    user-api:\n      entryPoints:\n        - web\n      rule: PathPrefix(`/api/v1/user`)\n      middlewares:\n        - user-strip-v1\n        - user-addprefix\n        - protected-common\n      service: user-service\n"
+	userServiceBlock := `
+    user-service:
+      loadBalancer:
+        servers:
+          - url: http://user-service:7705
+`
+	userMiddlewareBlock := `
+    user-strip-v1:
+      stripPrefix:
+        prefixes:
+          - /api/v1
+
+    user-addprefix:
+      addPrefix:
+        prefix: /api/user-service/v1
+`
+	routes = strings.Replace(routes, userRouterBlock, "", 1)
+	routes = strings.Replace(routes, userServiceBlock, "", 1)
+	routes = strings.Replace(routes, userMiddlewareBlock, "", 1)
+	return os.WriteFile(routesPath, []byte(routes), 0o644)
+}
+
+func updateTraefikPort(projectDir string, traefikPort int) error {
+	composePath := filepath.Join(projectDir, "docker-compose.yml")
+	composeData, err := os.ReadFile(composePath)
+	if err != nil {
+		return err
+	}
+	compose := strings.ReplaceAll(string(composeData), `- "8000:8000"`, `- "`+strconv.Itoa(traefikPort)+`:`+strconv.Itoa(traefikPort)+`"`)
+	if err := os.WriteFile(composePath, []byte(compose), 0o644); err != nil {
+		return err
+	}
+
+	traefikConfigPath := filepath.Join(projectDir, "traefik", "traefik.yml")
+	traefikConfigData, err := os.ReadFile(traefikConfigPath)
+	if err != nil {
+		return err
+	}
+	traefikConfig := strings.ReplaceAll(string(traefikConfigData), `address: ":8000"`, `address: ":`+strconv.Itoa(traefikPort)+`"`)
+	return os.WriteFile(traefikConfigPath, []byte(traefikConfig), 0o644)
 }
 
 func existingPorts(repoRoot string) (map[int]struct{}, map[int]struct{}, error) {

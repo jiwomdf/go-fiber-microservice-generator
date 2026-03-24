@@ -11,10 +11,10 @@ var (
 
 type GenerateRequest struct {
 	ProjectName  string            `json:"projectName"`
+	TraefikPort  string            `json:"traefikPort"`
+	AuthHTTPPort string            `json:"authHttpPort"`
 	AuthGRPCPort string            `json:"authGrpcPort"`
-	UserGRPCPort string            `json:"userGrpcPort"`
 	AuthDB       DatabaseConfig    `json:"authDb"`
-	UserDB       DatabaseConfig    `json:"userDb"`
 	Services     []GenerateService `json:"services"`
 }
 

@@ -141,7 +141,7 @@
 
       .grid-with-apply {
         display: grid;
-        grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) auto;
+        grid-template-columns: repeat(3, minmax(180px, 1fr)) auto;
         gap: 18px;
         align-items: end;
       }
@@ -326,12 +326,7 @@
           <li>
             <code>Scaffold extra services from the current template</code>
           </li>
-          <li>
-            <code>Predefined auth-service and user-service</code>
-            <span style="color: #fca5a5; font-weight: 600">
-              (for a simpler setup)
-            </span>
-          </li>
+          <li><code>Predefined auth-service</code></li>
         </ul>
       </section>
 
@@ -347,12 +342,24 @@
             />
           </label>
           <label>
+            Traefik Port
+            <input
+              id="traefik-port"
+              name="traefik-port"
+              type="number"
+              min="1"
+              max="65535"
+              placeholder="8000"
+              required
+            />
+          </label>
+          <label>
             Number Of New Services
             <input
               id="service-count"
               name="service-count"
               type="number"
-              min="1"
+              min="0"
               max="20"
               placeholder="e.g. 3"
               required
@@ -364,11 +371,15 @@
         </div>
 
         <section>
-          <h2 class="section-title">Base Service Databases</h2>
+          <h2 class="section-title">Base Service Config</h2>
           <div class="services">
             <div class="service-card base-service-card">
               <strong>auth-service</strong>
               <div class="grid">
+                <label>
+                  HTTP Port
+                  <input id="auth-http-port" placeholder="7704" required />
+                </label>
                 <label>
                   gRPC Port
                   <input id="auth-grpc-port" placeholder="57704" required />
@@ -399,39 +410,6 @@
                 </label>
               </div>
             </div>
-            <div class="service-card base-service-card">
-              <strong>user-service</strong>
-              <div class="grid">
-                <label>
-                  gRPC Port
-                  <input id="user-grpc-port" placeholder="57705" required />
-                </label>
-                <label>
-                  DB Host
-                  <input id="user-db-host" placeholder="localhost" required />
-                </label>
-                <label>
-                  DB Port
-                  <input id="user-db-port" placeholder="5432" required />
-                </label>
-                <label>
-                  DB Name
-                  <input
-                    id="user-db-name"
-                    placeholder="somedatabase"
-                    required
-                  />
-                </label>
-                <label>
-                  DB Username
-                  <input id="user-db-user" placeholder="postgres" required />
-                </label>
-                <label>
-                  DB Password
-                  <input id="user-db-password" placeholder="your-password" />
-                </label>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -446,7 +424,7 @@
           </button>
           <span class="hint">
             Service names are slugified automatically. Reserved names:
-            <code>auth</code>, <code>user</code>.
+            <code>auth</code>.
           </span>
         </div>
 
@@ -465,7 +443,7 @@
       );
 
       function renderServiceInputs() {
-        const count = Math.max(1, Math.min(20, Number(countEl.value || 0)));
+        const count = Math.max(0, Math.min(20, Number(countEl.value || 0)));
         servicesEl.innerHTML = "";
 
         for (let i = 0; i < count; i += 1) {
@@ -530,13 +508,17 @@
       function applyServiceInputs() {
         const count = Number(countEl.value || 0);
 
-        if (!Number.isInteger(count) || count < 1 || count > 20) {
+        if (!Number.isInteger(count) || count < 0 || count > 20) {
           servicesEl.innerHTML = "";
-          setStatus("Number Of New Services must be between 1 and 20.", true);
+          setStatus("Number Of New Services must be between 0 and 20.", true);
           return;
         }
 
         renderServiceInputs();
+        if (count === 0) {
+          setStatus("Auth-only project is ready to generate.");
+          return;
+        }
         setStatus(
           `${count} service input${count > 1 ? "s are" : " is"} ready to fill.`,
         );
@@ -555,13 +537,6 @@
           database: document.getElementById("auth-db-name").value.trim(),
           username: document.getElementById("auth-db-user").value.trim(),
           password: document.getElementById("auth-db-password").value,
-        };
-        const userDb = {
-          host: document.getElementById("user-db-host").value.trim(),
-          port: document.getElementById("user-db-port").value.trim(),
-          database: document.getElementById("user-db-name").value.trim(),
-          username: document.getElementById("user-db-user").value.trim(),
-          password: document.getElementById("user-db-password").value,
         };
         const services = Array.from(document.querySelectorAll(".service-card"))
           .filter((card) => card.querySelector('input[name="service-name"]'))
@@ -587,11 +562,8 @@
           }))
           .filter((service) => service.name);
 
-        if (!projectName || services.length === 0) {
-          setStatus(
-            "Project name and at least one service are required.",
-            true,
-          );
+        if (!projectName) {
+          setStatus("Project name is required.", true);
           return;
         }
 
@@ -604,14 +576,16 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               projectName,
+              traefikPort: document
+                .getElementById("traefik-port")
+                .value.trim(),
+              authHttpPort: document
+                .getElementById("auth-http-port")
+                .value.trim(),
               authGrpcPort: document
                 .getElementById("auth-grpc-port")
                 .value.trim(),
-              userGrpcPort: document
-                .getElementById("user-grpc-port")
-                .value.trim(),
               authDb,
-              userDb,
               services,
             }),
           });
