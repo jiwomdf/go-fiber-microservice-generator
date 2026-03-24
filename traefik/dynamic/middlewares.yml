@@ -1,0 +1,46 @@
+http:
+  middlewares:
+    api-rate-limit:
+      rateLimit:
+        average: 60
+        burst: 30
+    api-cors:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - Authorization
+          - Content-Type
+          - Accept
+          - Origin
+          - X-Requested-With
+        accessControlAllowOriginList:
+          - "*"
+        accessControlMaxAge: 3600
+        addVaryHeader: true
+    auth-forward:
+      forwardAuth:
+        address: "http://auth-service:7704/api/auth-service/v1/verify"
+        trustForwardHeader: true
+        authRequestHeaders:
+          - Authorization
+        authResponseHeaders:
+          - X-Auth-Email
+          - X-Auth-Issuer
+          - X-Auth-Token-Type
+    public-common:
+      chain:
+        middlewares:
+          - api-rate-limit
+          - api-cors
+    protected-common:
+      chain:
+        middlewares:
+          - api-rate-limit
+          - api-cors
+          - auth-forward

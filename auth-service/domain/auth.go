@@ -16,6 +16,13 @@ type LoginResponse struct {
 	Expired string `json:"expired"`
 }
 
+type VerifyTokenResponse struct {
+	Email     string `json:"email"`
+	Subject   string `json:"subject"`
+	Issuer    string `json:"issuer"`
+	TokenType string `json:"token_type"`
+}
+
 type UpdateAuthRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`

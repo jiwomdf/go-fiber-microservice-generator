@@ -3,6 +3,7 @@ package jwt
 import (
 	"auth-service/domain"
 	"auth-service/helper"
+	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -42,4 +43,46 @@ func buildTokenResponse(email string, tokenType string, expSecond time.Duration)
 		Email:   email,
 	}
 	return &response, domain.StatusSuccessLogin, nil
+}
+
+func VerifyToken(tokenString string) (*domain.VerifyTokenResponse, string, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		expectedAlg := viper.GetString(helper.JWT_SIGNING_METHOD)
+		if expectedAlg != "" && token.Method.Alg() != expectedAlg {
+			return nil, errors.New("unexpected signing method")
+		}
+
+		return []byte(viper.GetString(helper.JWT_SIGNATURE_KEY)), nil
+	})
+	if err != nil || !token.Valid {
+		return nil, domain.StatusUnauthorized, domain.ErrUnauthorized
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, domain.StatusUnauthorized, domain.ErrUnauthorized
+	}
+
+	exp, ok := claims[helper.Exp].(float64)
+	if !ok || int64(exp) < time.Now().Unix() {
+		return nil, domain.StatusUnauthorized, domain.ErrUnauthorized
+	}
+
+	response := &domain.VerifyTokenResponse{
+		Email:     getStringClaim(claims, helper.Sub),
+		Subject:   getStringClaim(claims, helper.Sub),
+		Issuer:    getStringClaim(claims, helper.Iss),
+		TokenType: getStringClaim(claims, helper.TokenType),
+	}
+
+	return response, domain.StatusSuccess, nil
+}
+
+func getStringClaim(claims jwt.MapClaims, key string) string {
+	value, ok := claims[key].(string)
+	if !ok {
+		return ""
+	}
+
+	return value
 }

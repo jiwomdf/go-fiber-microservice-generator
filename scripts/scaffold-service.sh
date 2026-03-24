@@ -64,13 +64,14 @@ append_compose_service() {
   [[ -f "$compose_file" ]] || return 0
   grep -q "^  ${service_name}:" "$compose_file" && return 0
 
-  SERVICE_NAME="$service_name" HTTP_PORT="$http_port" python3 - "$compose_file" <<'PY'
+  SERVICE_NAME="$service_name" ENTITY="$entity" HTTP_PORT="$http_port" python3 - "$compose_file" <<'PY'
 import os
 import pathlib
 import sys
 
 compose_file = pathlib.Path(sys.argv[1])
 service_name = os.environ["SERVICE_NAME"]
+entity = os.environ["ENTITY"]
 http_port = os.environ["HTTP_PORT"]
 
 block = f"""
@@ -78,74 +79,33 @@ block = f"""
     build:
       context: ./{service_name}
     container_name: {service_name}
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
-      POSTGRES_HOST: postgres
+      POSTGRES_HOST: host.docker.internal
       POSTGRES_PORT: "5432"
-      POSTGRES_DATABASE: fiber_microservice
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin1234
+      POSTGRES_DATABASE: belajarmudah
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ""
       POSTGRES_SCHEMA: public
       SERVER_HTTP_PORT: "{http_port}"
     ports:
       - "{http_port}:{http_port}"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.{service_name}.loadbalancer.server.port={http_port}"
+      - "traefik.http.routers.{entity}-api.rule=PathPrefix(`/api/v1/{entity}`)"
+      - "traefik.http.routers.{entity}-api.entrypoints=web"
+      - "traefik.http.routers.{entity}-api.middlewares={entity}-strip-v1,{entity}-addprefix,protected-common@file"
+      - "traefik.http.routers.{entity}-api.service={service_name}"
+      - "traefik.http.middlewares.{entity}-strip-v1.stripprefix.prefixes=/api/v1"
+      - "traefik.http.middlewares.{entity}-addprefix.addprefix.prefix=/api/{service_name}/v1"
 """
 
 text = compose_file.read_text()
-marker = "\n  kong:\n"
+marker = "\n  traefik:\n"
 if marker not in text:
-    raise SystemExit("could not find kong service block in docker-compose.yml")
+    raise SystemExit("could not find traefik service block in docker-compose.yml")
 text = text.replace(marker, block + marker, 1)
 compose_file.write_text(text)
-PY
-}
-
-append_kong_service() {
-  local kong_file="$repo_root/kong/kong.yml"
-  [[ -f "$kong_file" ]] || return 0
-  grep -q "name: ${service_name}" "$kong_file" && return 0
-
-  SERVICE_NAME="$service_name" ENTITY="$entity" HTTP_PORT="$http_port" python3 - "$kong_file" <<'PY'
-import os
-import pathlib
-import sys
-
-kong_file = pathlib.Path(sys.argv[1])
-service_name = os.environ["SERVICE_NAME"]
-entity = os.environ["ENTITY"]
-http_port = os.environ["HTTP_PORT"]
-
-block = f"""
-
-  - name: {service_name}
-    url: http://{service_name}:{http_port}/api/{service_name}/v1/{entity}
-    routes:
-      - name: {entity}-route
-        paths:
-          - /api/v1/{entity}
-        methods:
-          - GET
-          - POST
-          - PATCH
-          - DELETE
-          - OPTIONS
-        strip_path: true
-    plugins:
-      - name: jwt
-        config:
-          key_claim_name: iss
-          secret_is_base64: false
-          claims_to_verify:
-            - exp
-"""
-
-text = kong_file.read_text()
-if not text.endswith("\n"):
-    text += "\n"
-text += block
-kong_file.write_text(text)
 PY
 }
 
@@ -266,7 +226,6 @@ replace_all "$target_dir/domain/errors.go" 'const StatusCodePrefix = "USER"' "co
 
 if [[ "$target_dir" == "$repo_root/"* ]]; then
   append_compose_service
-  append_kong_service
 fi
 
 echo "Generated service at: $target_dir"

@@ -1,0 +1,16 @@
+entryPoints:
+  web:
+    address: ":8000"
+
+providers:
+  docker:
+    exposedByDefault: false
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+accessLog:
+  format: json
+
+log:
+  level: INFO

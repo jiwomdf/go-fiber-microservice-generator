@@ -1,8 +1,10 @@
 package handler
 
 import (
+	tokenjwt "auth-service/data/repository/jtw"
 	"auth-service/domain"
 	"auth-service/helper"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -153,4 +155,39 @@ func (as *AuthHandler) DeleteAuth(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(
 		helper.NewResponse(domain.StatusSuccess, "Auth deleted successfully", nil, nil),
 	)
+}
+
+func (as *AuthHandler) Verify(c *fiber.Ctx) error {
+	authHeader := c.Get(fiber.HeaderAuthorization)
+	if authHeader == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(
+			helper.NewResponse(domain.StatusUnauthorized, "Missing authorization header", nil, nil),
+		)
+	}
+
+	const bearerPrefix = "Bearer "
+	if !strings.HasPrefix(authHeader, bearerPrefix) {
+		return c.Status(fiber.StatusUnauthorized).JSON(
+			helper.NewResponse(domain.StatusUnauthorized, "Invalid authorization header", nil, nil),
+		)
+	}
+	tokenString := strings.TrimSpace(strings.TrimPrefix(authHeader, bearerPrefix))
+	if tokenString == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(
+			helper.NewResponse(domain.StatusUnauthorized, "Invalid authorization header", nil, nil),
+		)
+	}
+
+	result, status, err := tokenjwt.VerifyToken(tokenString)
+	if err != nil {
+		return c.Status(domain.GetHttpStatusCode(status)).JSON(
+			helper.NewResponse(status, err.Error(), nil, nil),
+		)
+	}
+
+	c.Set("X-Auth-Email", result.Email)
+	c.Set("X-Auth-Issuer", result.Issuer)
+	c.Set("X-Auth-Token-Type", result.TokenType)
+
+	return c.SendStatus(fiber.StatusOK)
 }
