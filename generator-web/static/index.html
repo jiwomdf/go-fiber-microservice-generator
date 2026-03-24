@@ -141,7 +141,7 @@
 
       .grid-with-apply {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) auto;
+        grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) auto;
         gap: 18px;
         align-items: end;
       }
@@ -267,9 +267,8 @@
       }
 
       .apply-button {
-        white-space: nowrap;
-        height: fit-content;
         color: lightgrey;
+        white-space: nowrap;
       }
 
       .hint {
@@ -293,6 +292,16 @@
 
       .status.error {
         color: var(--warn);
+      }
+
+      @media (max-width: 760px) {
+        .grid-with-apply {
+          grid-template-columns: 1fr;
+        }
+
+        .apply-button {
+          width: 100%;
+        }
       }
     </style>
   </head>
@@ -337,7 +346,6 @@
               required
             />
           </label>
-
           <label>
             Number Of New Services
             <input
@@ -350,7 +358,6 @@
               required
             />
           </label>
-
           <button id="apply-services-button" type="button" class="apply-button">
             Apply
           </button>
@@ -363,14 +370,19 @@
               <strong>auth-service</strong>
               <div class="grid">
                 <label>
-                  Host
+                  gRPC Port
+                  <input id="auth-grpc-port" placeholder="57704" required />
+                </label>
+                <label>
+                  DB Host
                   <input id="auth-db-host" placeholder="localhost" required />
                 </label>
                 <label>
-                  Port <input id="auth-db-port" placeholder="5432" required />
+                  DB Port
+                  <input id="auth-db-port" placeholder="5432" required />
                 </label>
                 <label>
-                  Database
+                  DB Name
                   <input
                     id="auth-db-name"
                     placeholder="somedatabase"
@@ -378,28 +390,32 @@
                   />
                 </label>
                 <label>
-                  Username
+                  DB Username
                   <input id="auth-db-user" placeholder="postgres" required />
                 </label>
                 <label>
-                  Password
+                  DB Password
                   <input id="auth-db-password" placeholder="your-password" />
                 </label>
               </div>
             </div>
-
             <div class="service-card base-service-card">
               <strong>user-service</strong>
               <div class="grid">
                 <label>
-                  Host
+                  gRPC Port
+                  <input id="user-grpc-port" placeholder="57705" required />
+                </label>
+                <label>
+                  DB Host
                   <input id="user-db-host" placeholder="localhost" required />
                 </label>
                 <label>
-                  Port <input id="user-db-port" placeholder="5432" required />
+                  DB Port
+                  <input id="user-db-port" placeholder="5432" required />
                 </label>
                 <label>
-                  Database
+                  DB Name
                   <input
                     id="user-db-name"
                     placeholder="somedatabase"
@@ -407,11 +423,11 @@
                   />
                 </label>
                 <label>
-                  Username
+                  DB Username
                   <input id="user-db-user" placeholder="postgres" required />
                 </label>
                 <label>
-                  Password
+                  DB Password
                   <input id="user-db-password" placeholder="your-password" />
                 </label>
               </div>
@@ -506,6 +522,11 @@
         }
       }
 
+      function setStatus(message, isError = false) {
+        statusEl.textContent = message;
+        statusEl.className = isError ? "status error" : "status";
+      }
+
       function applyServiceInputs() {
         const count = Number(countEl.value || 0);
 
@@ -521,11 +542,6 @@
         );
       }
 
-      function setStatus(message, isError = false) {
-        statusEl.textContent = message;
-        statusEl.className = isError ? "status error" : "status";
-      }
-
       async function generateProject(event) {
         event.preventDefault();
         setStatus("");
@@ -533,7 +549,6 @@
         const projectName = document
           .getElementById("project-name")
           .value.trim();
-
         const authDb = {
           host: document.getElementById("auth-db-host").value.trim(),
           port: document.getElementById("auth-db-port").value.trim(),
@@ -541,7 +556,6 @@
           username: document.getElementById("auth-db-user").value.trim(),
           password: document.getElementById("auth-db-password").value,
         };
-
         const userDb = {
           host: document.getElementById("user-db-host").value.trim(),
           port: document.getElementById("user-db-port").value.trim(),
@@ -549,7 +563,6 @@
           username: document.getElementById("user-db-user").value.trim(),
           password: document.getElementById("user-db-password").value,
         };
-
         const services = Array.from(document.querySelectorAll(".service-card"))
           .filter((card) => card.querySelector('input[name="service-name"]'))
           .map((card) => ({
@@ -589,7 +602,18 @@
           const response = await fetch("/generate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ projectName, authDb, userDb, services }),
+            body: JSON.stringify({
+              projectName,
+              authGrpcPort: document
+                .getElementById("auth-grpc-port")
+                .value.trim(),
+              userGrpcPort: document
+                .getElementById("user-grpc-port")
+                .value.trim(),
+              authDb,
+              userDb,
+              services,
+            }),
           });
 
           if (!response.ok) {
