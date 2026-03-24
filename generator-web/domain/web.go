@@ -10,10 +10,12 @@ var (
 )
 
 type GenerateRequest struct {
-	ProjectName string            `json:"projectName"`
-	AuthDB      DatabaseConfig    `json:"authDb"`
-	UserDB      DatabaseConfig    `json:"userDb"`
-	Services    []GenerateService `json:"services"`
+	ProjectName  string            `json:"projectName"`
+	AuthGRPCPort string            `json:"authGrpcPort"`
+	UserGRPCPort string            `json:"userGrpcPort"`
+	AuthDB       DatabaseConfig    `json:"authDb"`
+	UserDB       DatabaseConfig    `json:"userDb"`
+	Services     []GenerateService `json:"services"`
 }
 
 type GenerateService struct {

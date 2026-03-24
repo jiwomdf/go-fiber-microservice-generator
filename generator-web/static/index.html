@@ -139,6 +139,13 @@
         gap: 18px;
       }
 
+      .grid-with-apply {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) auto;
+        gap: 18px;
+        align-items: end;
+      }
+
       label {
         display: grid;
         gap: 8px;
@@ -259,6 +266,12 @@
         opacity: 0.7;
       }
 
+      .apply-button {
+        white-space: nowrap;
+        height: fit-content;
+        color: lightgrey;
+      }
+
       .hint {
         color: var(--muted);
         font-size: 0.92rem;
@@ -314,7 +327,7 @@
       </section>
 
       <form id="generator-form">
-        <div class="grid">
+        <div class="grid-with-apply">
           <label>
             Project Name
             <input
@@ -324,6 +337,7 @@
               required
             />
           </label>
+
           <label>
             Number Of New Services
             <input
@@ -332,10 +346,14 @@
               type="number"
               min="1"
               max="20"
-              value="1"
+              placeholder="e.g. 3"
               required
             />
           </label>
+
+          <button id="apply-services-button" type="button" class="apply-button">
+            Apply
+          </button>
         </div>
 
         <section>
@@ -369,6 +387,7 @@
                 </label>
               </div>
             </div>
+
             <div class="service-card base-service-card">
               <strong>user-service</strong>
               <div class="grid">
@@ -425,9 +444,12 @@
       const formEl = document.getElementById("generator-form");
       const statusEl = document.getElementById("status");
       const buttonEl = document.getElementById("generate-button");
+      const applyServicesButtonEl = document.getElementById(
+        "apply-services-button",
+      );
 
       function renderServiceInputs() {
-        const count = Math.max(1, Math.min(20, Number(countEl.value || 1)));
+        const count = Math.max(1, Math.min(20, Number(countEl.value || 0)));
         servicesEl.innerHTML = "";
 
         for (let i = 0; i < count; i += 1) {
@@ -484,6 +506,21 @@
         }
       }
 
+      function applyServiceInputs() {
+        const count = Number(countEl.value || 0);
+
+        if (!Number.isInteger(count) || count < 1 || count > 20) {
+          servicesEl.innerHTML = "";
+          setStatus("Number Of New Services must be between 1 and 20.", true);
+          return;
+        }
+
+        renderServiceInputs();
+        setStatus(
+          `${count} service input${count > 1 ? "s are" : " is"} ready to fill.`,
+        );
+      }
+
       function setStatus(message, isError = false) {
         statusEl.textContent = message;
         statusEl.className = isError ? "status error" : "status";
@@ -496,6 +533,7 @@
         const projectName = document
           .getElementById("project-name")
           .value.trim();
+
         const authDb = {
           host: document.getElementById("auth-db-host").value.trim(),
           port: document.getElementById("auth-db-port").value.trim(),
@@ -503,6 +541,7 @@
           username: document.getElementById("auth-db-user").value.trim(),
           password: document.getElementById("auth-db-password").value,
         };
+
         const userDb = {
           host: document.getElementById("user-db-host").value.trim(),
           port: document.getElementById("user-db-port").value.trim(),
@@ -510,6 +549,7 @@
           username: document.getElementById("user-db-user").value.trim(),
           password: document.getElementById("user-db-password").value,
         };
+
         const services = Array.from(document.querySelectorAll(".service-card"))
           .filter((card) => card.querySelector('input[name="service-name"]'))
           .map((card) => ({
@@ -579,9 +619,9 @@
         }
       }
 
-      countEl.addEventListener("input", renderServiceInputs);
+      applyServicesButtonEl.addEventListener("click", applyServiceInputs);
       formEl.addEventListener("submit", generateProject);
-      renderServiceInputs();
+      servicesEl.innerHTML = "";
     </script>
   </body>
 </html>
