@@ -5,10 +5,11 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  ./scripts/scaffold-service.sh <entity-name> [output-dir]
+  ./scripts/scaffold-service.sh [--http-port PORT] [--grpc-port PORT] <entity-name> [output-dir]
 
 Example:
   ./scripts/scaffold-service.sh asset ./asset-service
+  ./scripts/scaffold-service.sh --http-port 7710 --grpc-port 57710 asset ./asset-service
 EOF
 }
 
@@ -31,6 +32,12 @@ replace_all() {
   local from="$2"
   local to="$3"
   FROM="$from" TO="$to" perl -0pi -e 's/\Q$ENV{FROM}\E/$ENV{TO}/g' "$file"
+}
+
+ensure_port_number() {
+  local value="$1"
+  local label="$2"
+  [[ "$value" =~ ^[0-9]+$ ]] || { echo "$label must be numeric" >&2; exit 1; }
 }
 
 next_service_ports() {
@@ -161,6 +168,32 @@ routes_file.write_text(text)
 PY
 }
 
+http_port_arg=""
+grpc_port_arg=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --http-port)
+      shift
+      [[ $# -gt 0 ]] || { echo "--http-port requires a value" >&2; exit 1; }
+      http_port_arg="$1"
+      ;;
+    --grpc-port)
+      shift
+      [[ $# -gt 0 ]] || { echo "--grpc-port requires a value" >&2; exit 1; }
+      grpc_port_arg="$1"
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    *)
+      break
+      ;;
+  esac
+  shift
+done
+
 entity="$(slugify "${1:-}")"
 [[ -n "$entity" ]] || { echo "entity name must contain letters or numbers" >&2; exit 1; }
 
@@ -180,6 +213,14 @@ target_dir="$(cd "$(dirname "$output_dir")" && pwd)/$(basename "$output_dir")"
 [[ ! -e "$target_dir" ]] || { echo "target directory already exists: $target_dir" >&2; exit 1; }
 
 read -r http_port grpc_port < <(next_service_ports)
+if [[ -n "$http_port_arg" ]]; then
+  ensure_port_number "$http_port_arg" "http port"
+  http_port="$http_port_arg"
+fi
+if [[ -n "$grpc_port_arg" ]]; then
+  ensure_port_number "$grpc_port_arg" "grpc port"
+  grpc_port="$grpc_port_arg"
+fi
 
 mkdir -p "$(dirname "$target_dir")"
 rsync -a \

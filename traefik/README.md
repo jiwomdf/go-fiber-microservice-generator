@@ -2,6 +2,7 @@
 
 This stack runs:
 
+- `generator-web` on `:8090`
 - `auth-service` on `:7704`
 - `user-service` on `:7705`
 - `traefik` on `:8000`

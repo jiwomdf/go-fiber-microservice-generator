@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Service Generator</title>
+    <style>
+      :root {
+        --bg: #f3efe6;
+        --panel: rgba(255, 251, 244, 0.92);
+        --ink: #1f2a1f;
+        --muted: #5d6759;
+        --accent: #1f6b4f;
+        --accent-strong: #134734;
+        --line: rgba(31, 42, 31, 0.12);
+        --warn: #8b2e2e;
+        --shadow: 0 24px 50px rgba(27, 39, 31, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(
+            circle at top left,
+            rgba(62, 123, 91, 0.18),
+            transparent 30%
+          ),
+          radial-gradient(
+            circle at bottom right,
+            rgba(195, 161, 90, 0.18),
+            transparent 28%
+          ),
+          linear-gradient(135deg, #f8f3e9 0%, #ede5d5 100%);
+        display: grid;
+        place-items: center;
+        padding: 32px 20px;
+      }
+
+      .shell {
+        width: min(860px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        backdrop-filter: blur(12px);
+      }
+
+      .hero {
+        padding: 34px 34px 20px;
+        background:
+          linear-gradient(
+            135deg,
+            rgba(31, 107, 79, 0.12),
+            rgba(195, 161, 90, 0.08)
+          ),
+          transparent;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .eyebrow {
+        font-size: 12px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 0 0 10px;
+      }
+
+      h1 {
+        margin: 0;
+        font-family: "IBM Plex Serif", Georgia, serif;
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        line-height: 0.95;
+        max-width: 9ch;
+      }
+
+      .hero p {
+        margin: 14px 0 0;
+        max-width: 62ch;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      form {
+        padding: 28px 34px 34px;
+        display: grid;
+        gap: 24px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+
+      input {
+        width: 100%;
+        border: 1px solid rgba(31, 42, 31, 0.18);
+        border-radius: 14px;
+        padding: 13px 14px;
+        font: inherit;
+        background: rgba(255, 255, 255, 0.9);
+        color: var(--ink);
+      }
+
+      input:focus {
+        outline: 2px solid rgba(31, 107, 79, 0.18);
+        border-color: var(--accent);
+      }
+
+      .services {
+        display: grid;
+        gap: 14px;
+      }
+
+      .service-card {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.7);
+      }
+
+      .service-card strong {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+        color: var(--accent-strong);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 14px 22px;
+        font: inherit;
+        font-weight: 700;
+        background: linear-gradient(
+          135deg,
+          var(--accent),
+          var(--accent-strong)
+        );
+        color: white;
+        cursor: pointer;
+      }
+
+      button[disabled] {
+        cursor: wait;
+        opacity: 0.7;
+      }
+
+      .hint {
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .status {
+        min-height: 1.2em;
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+
+      .status.error {
+        color: var(--warn);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">Generator</p>
+        <h3>Build A Fresh Service Pack</h3>
+        <p>
+          Generate a downloadable project bundle with <code>auth-service</code>,
+          <code>user-service</code>, shared Traefik routing, Docker Compose, and
+          any extra services you want scaffolded from the current template.
+        </p>
+      </section>
+
+      <form id="generator-form">
+        <div class="grid">
+          <label>
+            Project Name
+            <input
+              id="project-name"
+              name="project-name"
+              placeholder="some-platform"
+              required
+            />
+          </label>
+          <label>
+            Number Of New Services
+            <input
+              id="service-count"
+              name="service-count"
+              type="number"
+              min="1"
+              max="20"
+              value="1"
+              required
+            />
+          </label>
+        </div>
+
+        <section>
+          <div class="services" id="services"></div>
+        </section>
+
+        <div class="actions">
+          <button id="generate-button" type="submit">
+            Generate Project Zip
+          </button>
+          <span class="hint"
+            >Service names are slugified automatically. Reserved names:
+            <code>auth</code>, <code>user</code>.</span
+          >
+        </div>
+
+        <div class="status" id="status"></div>
+      </form>
+    </main>
+
+    <script>
+      const servicesEl = document.getElementById("services");
+      const countEl = document.getElementById("service-count");
+      const formEl = document.getElementById("generator-form");
+      const statusEl = document.getElementById("status");
+      const buttonEl = document.getElementById("generate-button");
+
+      function renderServiceInputs() {
+        const count = Math.max(1, Math.min(20, Number(countEl.value || 1)));
+        servicesEl.innerHTML = "";
+
+        for (let i = 0; i < count; i += 1) {
+          const card = document.createElement("div");
+          card.className = "service-card";
+          card.innerHTML = `
+          <strong>Service ${i + 1}</strong>
+          <div class="grid">
+            <label>
+              Service Name
+              <input name="service-name" placeholder="inventory" required>
+            </label>
+            <label>
+              HTTP Port
+              <input name="http-port" type="number" min="7000" max="7999" placeholder="auto">
+            </label>
+            <label>
+              gRPC Port
+              <input name="grpc-port" type="number" min="57000" max="59999" placeholder="auto">
+            </label>
+          </div>
+        `;
+          servicesEl.appendChild(card);
+        }
+      }
+
+      function setStatus(message, isError = false) {
+        statusEl.textContent = message;
+        statusEl.className = isError ? "status error" : "status";
+      }
+
+      async function generateProject(event) {
+        event.preventDefault();
+        setStatus("");
+
+        const projectName = document
+          .getElementById("project-name")
+          .value.trim();
+        const services = Array.from(document.querySelectorAll(".service-card"))
+          .map((card) => ({
+            name: card.querySelector('input[name="service-name"]').value.trim(),
+            httpPort: card
+              .querySelector('input[name="http-port"]')
+              .value.trim(),
+            grpcPort: card
+              .querySelector('input[name="grpc-port"]')
+              .value.trim(),
+          }))
+          .filter((service) => service.name);
+
+        if (!projectName || services.length === 0) {
+          setStatus(
+            "Project name and at least one service are required.",
+            true,
+          );
+          return;
+        }
+
+        buttonEl.disabled = true;
+        setStatus("Generating project zip...");
+
+        try {
+          const response = await fetch("/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ projectName, services }),
+          });
+
+          if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || "generation failed");
+          }
+
+          const blob = await response.blob();
+          const disposition = response.headers.get("Content-Disposition") || "";
+          const match = disposition.match(/filename="(.+)"/);
+          const filename = match ? match[1] : "generated-project.zip";
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+
+          setStatus("Project generated. Download should start automatically.");
+        } catch (error) {
+          setStatus(error.message || "generation failed", true);
+        } finally {
+          buttonEl.disabled = false;
+        }
+      }
+
+      countEl.addEventListener("input", renderServiceInputs);
+      formEl.addEventListener("submit", generateProject);
+      renderServiceInputs();
+    </script>
+  </body>
+</html>
