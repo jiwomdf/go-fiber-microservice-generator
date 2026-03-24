@@ -64,14 +64,13 @@ append_compose_service() {
   [[ -f "$compose_file" ]] || return 0
   grep -q "^  ${service_name}:" "$compose_file" && return 0
 
-  SERVICE_NAME="$service_name" ENTITY="$entity" HTTP_PORT="$http_port" python3 - "$compose_file" <<'PY'
+  SERVICE_NAME="$service_name" HTTP_PORT="$http_port" python3 - "$compose_file" <<'PY'
 import os
 import pathlib
 import sys
 
 compose_file = pathlib.Path(sys.argv[1])
 service_name = os.environ["SERVICE_NAME"]
-entity = os.environ["ENTITY"]
 http_port = os.environ["HTTP_PORT"]
 
 block = f"""
@@ -89,15 +88,6 @@ block = f"""
       SERVER_HTTP_PORT: "{http_port}"
     ports:
       - "{http_port}:{http_port}"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.{service_name}.loadbalancer.server.port={http_port}"
-      - "traefik.http.routers.{entity}-api.rule=PathPrefix(`/api/v1/{entity}`)"
-      - "traefik.http.routers.{entity}-api.entrypoints=web"
-      - "traefik.http.routers.{entity}-api.middlewares={entity}-strip-v1,{entity}-addprefix,protected-common@file"
-      - "traefik.http.routers.{entity}-api.service={service_name}"
-      - "traefik.http.middlewares.{entity}-strip-v1.stripprefix.prefixes=/api/v1"
-      - "traefik.http.middlewares.{entity}-addprefix.addprefix.prefix=/api/{service_name}/v1"
 """
 
 text = compose_file.read_text()
@@ -106,6 +96,68 @@ if marker not in text:
     raise SystemExit("could not find traefik service block in docker-compose.yml")
 text = text.replace(marker, block + marker, 1)
 compose_file.write_text(text)
+PY
+}
+
+append_traefik_route() {
+  local routes_file="$repo_root/traefik/dynamic/routes.yml"
+  [[ -f "$routes_file" ]] || return 0
+  grep -q "^[[:space:]]*${entity}-api:" "$routes_file" && return 0
+
+  ENTITY="$entity" SERVICE_NAME="$service_name" HTTP_PORT="$http_port" python3 - "$routes_file" <<'PY'
+import os
+import pathlib
+import sys
+
+routes_file = pathlib.Path(sys.argv[1])
+entity = os.environ["ENTITY"]
+service_name = os.environ["SERVICE_NAME"]
+http_port = os.environ["HTTP_PORT"]
+
+block = f"""
+
+    {entity}-api:
+      entryPoints:
+        - web
+      rule: PathPrefix(`/api/v1/{entity}`)
+      middlewares:
+        - {entity}-strip-v1
+        - {entity}-addprefix
+        - protected-common
+      service: {service_name}
+"""
+
+services_block = f"""
+
+    {service_name}:
+      loadBalancer:
+        servers:
+          - url: http://{service_name}:{http_port}
+"""
+
+middlewares_block = f"""
+
+    {entity}-strip-v1:
+      stripPrefix:
+        prefixes:
+          - /api/v1
+
+    {entity}-addprefix:
+      addPrefix:
+        prefix: /api/{service_name}/v1
+"""
+
+text = routes_file.read_text()
+router_marker = "\n  services:\n"
+service_marker = "\n  middlewares:\n"
+if router_marker not in text or service_marker not in text:
+    raise SystemExit("could not find expected sections in traefik/dynamic/routes.yml")
+text = text.replace(router_marker, block + router_marker, 1)
+text = text.replace(service_marker, services_block + service_marker, 1)
+if not text.endswith("\n"):
+    text += "\n"
+text += middlewares_block
+routes_file.write_text(text)
 PY
 }
 
@@ -226,6 +278,7 @@ replace_all "$target_dir/domain/errors.go" 'const StatusCodePrefix = "USER"' "co
 
 if [[ "$target_dir" == "$repo_root/"* ]]; then
   append_compose_service
+  append_traefik_route
 fi
 
 echo "Generated service at: $target_dir"

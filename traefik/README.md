@@ -20,6 +20,7 @@ Traefik applies:
 - rate limiting
 - access logging
 - `ForwardAuth` protection on `/api/v1/user...`
+- file-based routing config from `traefik/dynamic/*.yml`
 
 ## Auth flow
 
@@ -38,6 +39,11 @@ Traefik calls that verify endpoint before forwarding protected `user-service` re
 ```bash
 docker compose up --build
 ```
+
+Traefik in this repo does not use the Docker provider or Docker socket. Routes and services are defined in:
+
+- `traefik/dynamic/middlewares.yml`
+- `traefik/dynamic/routes.yml`
 
 Expected local DB settings from Docker Compose:
 

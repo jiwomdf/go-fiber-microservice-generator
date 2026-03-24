@@ -1,0 +1,61 @@
+http:
+  routers:
+    auth-login:
+      entryPoints:
+        - web
+      rule: Path(`/api/v1/login`)
+      middlewares:
+        - auth-strip-v1
+        - auth-addprefix
+        - public-common
+      service: auth-service
+
+    auth-api:
+      entryPoints:
+        - web
+      rule: PathPrefix(`/api/v1/auth`)
+      middlewares:
+        - auth-strip-v1
+        - auth-addprefix
+        - protected-common
+      service: auth-service
+
+    user-api:
+      entryPoints:
+        - web
+      rule: PathPrefix(`/api/v1/user`)
+      middlewares:
+        - user-strip-v1
+        - user-addprefix
+        - protected-common
+      service: user-service
+
+  services:
+    auth-service:
+      loadBalancer:
+        servers:
+          - url: http://auth-service:7704
+
+    user-service:
+      loadBalancer:
+        servers:
+          - url: http://user-service:7705
+
+  middlewares:
+    auth-strip-v1:
+      stripPrefix:
+        prefixes:
+          - /api/v1
+
+    auth-addprefix:
+      addPrefix:
+        prefix: /api/auth-service/v1
+
+    user-strip-v1:
+      stripPrefix:
+        prefixes:
+          - /api/v1
+
+    user-addprefix:
+      addPrefix:
+        prefix: /api/user-service/v1
