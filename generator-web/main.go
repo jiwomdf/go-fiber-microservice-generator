@@ -71,13 +71,13 @@ func handleGenerate(w http.ResponseWriter, r *http.Request, repoRoot string) {
 		return
 	}
 
-	projectName, services, err := normalizeRequest(req)
+	projectName, authDB, userDB, services, err := normalizeRequest(req, repoRoot)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	archiveName, zipData, err := buildProjectArchive(repoRoot, projectName, services)
+	archiveName, zipData, err := buildProjectArchive(repoRoot, projectName, authDB, userDB, services)
 	if err != nil {
 		log.Printf("generate failed: %v", err)
 		http.Error(w, "failed to generate project", http.StatusInternalServerError)
@@ -94,24 +94,35 @@ type serviceSpec struct {
 	Name     string
 	HTTPPort int
 	GRPCPort int
+	DB       domain.DatabaseConfig
 }
 
-func normalizeRequest(req domain.GenerateRequest) (string, []serviceSpec, error) {
+func normalizeRequest(req domain.GenerateRequest, repoRoot string) (string, domain.DatabaseConfig, domain.DatabaseConfig, []serviceSpec, error) {
 	projectName := slugify(req.ProjectName)
 	if projectName == "" {
-		return "", nil, errors.New("project name is required")
+		return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, errors.New("project name is required")
 	}
 
 	if len(req.Services) == 0 {
-		return "", nil, errors.New("at least one service is required")
+		return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, errors.New("at least one service is required")
 	}
 	if len(req.Services) > 20 {
-		return "", nil, errors.New("too many services requested")
+		return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, errors.New("too many services requested")
 	}
 
-	existingHTTPPorts, existingGRPCPorts, err := existingPorts(findRepoRootMust())
+	authDB, err := normalizeDBConfig("auth-service", req.AuthDB)
 	if err != nil {
-		return "", nil, err
+		return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, err
+	}
+
+	userDB, err := normalizeDBConfig("user-service", req.UserDB)
+	if err != nil {
+		return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, err
+	}
+
+	existingHTTPPorts, existingGRPCPorts, err := existingPorts(repoRoot)
+	if err != nil {
+		return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, err
 	}
 
 	nextHTTPPort := nextPort(existingHTTPPorts, 7703)
@@ -124,45 +135,50 @@ func normalizeRequest(req domain.GenerateRequest) (string, []serviceSpec, error)
 	for _, raw := range req.Services {
 		service := slugify(raw.Name)
 		if service == "" {
-			return "", nil, errors.New("service names must contain letters or numbers")
+			return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, errors.New("service names must contain letters or numbers")
 		}
 		if service == "auth" || service == "user" {
-			return "", nil, fmt.Errorf("%q is reserved because the base project already contains %s-service", service, service)
+			return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("%q is reserved because the base project already contains %s-service", service, service)
 		}
 		if _, ok := seenNames[service]; ok {
-			return "", nil, fmt.Errorf("duplicate service name: %s", service)
+			return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("duplicate service name: %s", service)
 		}
 
 		httpPort, err := parsePort(raw.HTTPPort, 7000, 7999)
 		if err != nil {
-			return "", nil, fmt.Errorf("%s http port: %w", service, err)
+			return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("%s http port: %w", service, err)
 		}
 		if httpPort == 0 {
 			httpPort = nextUnusedPort(nextHTTPPort, existingHTTPPorts, seenHTTP)
 			nextHTTPPort = httpPort + 1
 		} else {
 			if _, ok := existingHTTPPorts[httpPort]; ok {
-				return "", nil, fmt.Errorf("http port already in use: %d", httpPort)
+				return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("http port already in use: %d", httpPort)
 			}
 			if _, ok := seenHTTP[httpPort]; ok {
-				return "", nil, fmt.Errorf("duplicate http port in request: %d", httpPort)
+				return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("duplicate http port in request: %d", httpPort)
 			}
 		}
 
 		grpcPort, err := parsePort(raw.GRPCPort, 57000, 59999)
 		if err != nil {
-			return "", nil, fmt.Errorf("%s grpc port: %w", service, err)
+			return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("%s grpc port: %w", service, err)
 		}
 		if grpcPort == 0 {
 			grpcPort = nextUnusedPort(nextGRPCPort, existingGRPCPorts, seenGRPC)
 			nextGRPCPort = grpcPort + 1
 		} else {
 			if _, ok := existingGRPCPorts[grpcPort]; ok {
-				return "", nil, fmt.Errorf("grpc port already in use: %d", grpcPort)
+				return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("grpc port already in use: %d", grpcPort)
 			}
 			if _, ok := seenGRPC[grpcPort]; ok {
-				return "", nil, fmt.Errorf("duplicate grpc port in request: %d", grpcPort)
+				return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, fmt.Errorf("duplicate grpc port in request: %d", grpcPort)
 			}
+		}
+
+		dbConfig, err := normalizeDBConfig(service+"-service", raw.DB)
+		if err != nil {
+			return "", domain.DatabaseConfig{}, domain.DatabaseConfig{}, nil, err
 		}
 
 		seenNames[service] = struct{}{}
@@ -172,13 +188,14 @@ func normalizeRequest(req domain.GenerateRequest) (string, []serviceSpec, error)
 			Name:     service,
 			HTTPPort: httpPort,
 			GRPCPort: grpcPort,
+			DB:       dbConfig,
 		})
 	}
 
-	return projectName, services, nil
+	return projectName, authDB, userDB, services, nil
 }
 
-func buildProjectArchive(repoRoot, projectName string, services []serviceSpec) (string, []byte, error) {
+func buildProjectArchive(repoRoot, projectName string, authDB, userDB domain.DatabaseConfig, services []serviceSpec) (string, []byte, error) {
 	tempRoot, err := os.MkdirTemp("", "service-generator-*")
 	if err != nil {
 		return "", nil, err
@@ -191,6 +208,13 @@ func buildProjectArchive(repoRoot, projectName string, services []serviceSpec) (
 	}
 
 	if err := copyTemplate(repoRoot, projectDir); err != nil {
+		return "", nil, err
+	}
+
+	if err := updateServiceDatabaseSettings(projectDir, "auth-service", authDB); err != nil {
+		return "", nil, err
+	}
+	if err := updateServiceDatabaseSettings(projectDir, "user-service", userDB); err != nil {
 		return "", nil, err
 	}
 
@@ -207,6 +231,10 @@ func buildProjectArchive(repoRoot, projectName string, services []serviceSpec) (
 		if err != nil {
 			return "", nil, fmt.Errorf("scaffold %s failed: %w: %s", service.Name, err, strings.TrimSpace(string(output)))
 		}
+
+		if err := updateServiceDatabaseSettings(projectDir, service.Name+"-service", service.DB); err != nil {
+			return "", nil, err
+		}
 	}
 
 	zipData, err := zipDirectory(projectDir, projectName)
@@ -215,6 +243,31 @@ func buildProjectArchive(repoRoot, projectName string, services []serviceSpec) (
 	}
 
 	return projectName + ".zip", zipData, nil
+}
+
+func normalizeDBConfig(label string, cfg domain.DatabaseConfig) (domain.DatabaseConfig, error) {
+	cfg.Host = strings.TrimSpace(cfg.Host)
+	cfg.Port = strings.TrimSpace(cfg.Port)
+	cfg.Database = strings.TrimSpace(cfg.Database)
+	cfg.Username = strings.TrimSpace(cfg.Username)
+
+	if cfg.Host == "" {
+		return domain.DatabaseConfig{}, fmt.Errorf("%s database host is required", label)
+	}
+	if cfg.Port == "" {
+		return domain.DatabaseConfig{}, fmt.Errorf("%s database port is required", label)
+	}
+	if _, err := strconv.Atoi(cfg.Port); err != nil {
+		return domain.DatabaseConfig{}, fmt.Errorf("%s database port must be numeric", label)
+	}
+	if cfg.Database == "" {
+		return domain.DatabaseConfig{}, fmt.Errorf("%s database name is required", label)
+	}
+	if cfg.Username == "" {
+		return domain.DatabaseConfig{}, fmt.Errorf("%s database username is required", label)
+	}
+
+	return cfg, nil
 }
 
 func parsePort(raw string, min, max int) (int, error) {
@@ -232,6 +285,109 @@ func parsePort(raw string, min, max int) (int, error) {
 	}
 
 	return port, nil
+}
+
+func updateServiceDatabaseSettings(projectDir, serviceName string, db domain.DatabaseConfig) error {
+	serviceDir := filepath.Join(projectDir, serviceName)
+	for _, configFile := range []string{
+		filepath.Join(serviceDir, "config.dev.yaml"),
+		filepath.Join(serviceDir, "config.local.yaml"),
+	} {
+		if err := updateConfigDatabaseBlock(configFile, db); err != nil {
+			return err
+		}
+	}
+
+	return updateComposeDatabaseEnv(filepath.Join(projectDir, "docker-compose.yml"), serviceName, db)
+}
+
+func updateConfigDatabaseBlock(path string, db domain.DatabaseConfig) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	lines := strings.Split(string(data), "\n")
+	inPostgres := false
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "postgres:" {
+			inPostgres = true
+			continue
+		}
+		if inPostgres && !strings.HasPrefix(line, "  ") && trimmed != "" {
+			inPostgres = false
+		}
+		if !inPostgres {
+			continue
+		}
+
+		switch {
+		case strings.HasPrefix(trimmed, "host:"):
+			lines[i] = `  host: "` + db.Host + `"`
+		case strings.HasPrefix(trimmed, "port:"):
+			lines[i] = `  port: "` + db.Port + `"`
+		case strings.HasPrefix(trimmed, "database:"):
+			lines[i] = `  database: "` + db.Database + `"`
+		case strings.HasPrefix(trimmed, "user:"):
+			lines[i] = `  user: "` + db.Username + `"`
+		case strings.HasPrefix(trimmed, "password:"):
+			lines[i] = `  password: "` + db.Password + `"`
+		}
+	}
+
+	return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o644)
+}
+
+func updateComposeDatabaseEnv(path, serviceName string, db domain.DatabaseConfig) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	lines := strings.Split(string(data), "\n")
+	currentService := ""
+	inEnvironment := false
+	serviceLinePattern := regexp.MustCompile(`^  ([a-z0-9-]+):\s*$`)
+
+	for i, line := range lines {
+		if match := serviceLinePattern.FindStringSubmatch(line); match != nil {
+			currentService = match[1]
+			inEnvironment = false
+			continue
+		}
+
+		if currentService != serviceName {
+			continue
+		}
+
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(line, "    environment:") {
+			inEnvironment = true
+			continue
+		}
+		if inEnvironment && strings.HasPrefix(line, "    ") && !strings.HasPrefix(line, "      ") {
+			inEnvironment = false
+		}
+		if !inEnvironment {
+			continue
+		}
+
+		switch {
+		case strings.HasPrefix(trimmed, "POSTGRES_HOST:"):
+			lines[i] = `      POSTGRES_HOST: "` + db.Host + `"`
+		case strings.HasPrefix(trimmed, "POSTGRES_PORT:"):
+			lines[i] = `      POSTGRES_PORT: "` + db.Port + `"`
+		case strings.HasPrefix(trimmed, "POSTGRES_DATABASE:"):
+			lines[i] = `      POSTGRES_DATABASE: "` + db.Database + `"`
+		case strings.HasPrefix(trimmed, "POSTGRES_USER:"):
+			lines[i] = `      POSTGRES_USER: "` + db.Username + `"`
+		case strings.HasPrefix(trimmed, "POSTGRES_PASSWORD:"):
+			lines[i] = `      POSTGRES_PASSWORD: "` + db.Password + `"`
+		}
+	}
+
+	return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o644)
 }
 
 func existingPorts(repoRoot string) (map[int]struct{}, map[int]struct{}, error) {
@@ -290,14 +446,6 @@ func nextUnusedPort(start int, existing, local map[int]struct{}) int {
 		}
 		return port
 	}
-}
-
-func findRepoRootMust() string {
-	repoRoot, err := findRepoRoot()
-	if err != nil {
-		panic(err)
-	}
-	return repoRoot
 }
 
 func copyTemplate(repoRoot, target string) error {

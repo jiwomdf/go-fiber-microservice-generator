@@ -6,15 +6,35 @@
     <title>Service Generator</title>
     <style>
       :root {
-        --bg: #f3efe6;
-        --panel: rgba(255, 251, 244, 0.92);
-        --ink: #1f2a1f;
-        --muted: #5d6759;
-        --accent: #1f6b4f;
-        --accent-strong: #134734;
-        --line: rgba(31, 42, 31, 0.12);
-        --warn: #8b2e2e;
-        --shadow: 0 24px 50px rgba(27, 39, 31, 0.12);
+        --bg: #1f1f22;
+        --panel: rgba(38, 38, 42, 0.96);
+        --ink: #c0c2c4;
+        --muted: #b8bec8;
+        --accent: #7181b0;
+        --accent-strong: #525e82;
+        --line: rgba(255, 255, 255, 0.1);
+        --warn: #f87171;
+        --shadow: 0 24px 50px rgba(0, 0, 0, 0.35);
+
+        --base-card-bg: linear-gradient(
+          135deg,
+          rgba(125, 211, 252, 0.1),
+          rgba(255, 255, 255, 0.03)
+        );
+        --base-card-border: rgba(125, 211, 252, 0.22);
+
+        --extra-card-bg: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.03),
+          rgba(255, 255, 255, 0.015)
+        );
+        --extra-card-border: rgba(255, 255, 255, 0.12);
+
+        --subsection-non-db-bg: rgba(125, 211, 252, 0.07);
+        --subsection-non-db-border: rgba(125, 211, 252, 0.18);
+
+        --subsection-db-bg: rgba(255, 255, 255, 0.035);
+        --subsection-db-border: rgba(255, 255, 255, 0.12);
       }
 
       * {
@@ -29,15 +49,15 @@
         background:
           radial-gradient(
             circle at top left,
-            rgba(62, 123, 91, 0.18),
-            transparent 30%
+            rgba(125, 211, 252, 0.08),
+            transparent 28%
           ),
           radial-gradient(
             circle at bottom right,
-            rgba(195, 161, 90, 0.18),
-            transparent 28%
+            rgba(255, 255, 255, 0.04),
+            transparent 24%
           ),
-          linear-gradient(135deg, #f8f3e9 0%, #ede5d5 100%);
+          linear-gradient(135deg, #18181b 0%, #232326 100%);
         display: grid;
         place-items: center;
         padding: 32px 20px;
@@ -58,34 +78,53 @@
         background:
           linear-gradient(
             135deg,
-            rgba(31, 107, 79, 0.12),
-            rgba(195, 161, 90, 0.08)
+            rgba(125, 211, 252, 0.08),
+            rgba(255, 255, 255, 0.02)
           ),
           transparent;
         border-bottom: 1px solid var(--line);
       }
 
-      .eyebrow {
-        font-size: 12px;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: var(--accent);
-        margin: 0 0 10px;
-      }
-
-      h1 {
+      h1,
+      h3 {
         margin: 0;
         font-family: "IBM Plex Serif", Georgia, serif;
-        font-size: clamp(2rem, 5vw, 3.5rem);
         line-height: 0.95;
-        max-width: 9ch;
+        color: var(--ink);
+      }
+
+      .hero h3 {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        max-width: 14ch;
+        line-height: 1.05;
       }
 
       .hero p {
-        margin: 14px 0 0;
+        margin: 14px 0 14px;
         max-width: 62ch;
         color: var(--muted);
         line-height: 1.6;
+      }
+
+      .hero-features {
+        margin: 0;
+        padding-left: 20px;
+        color: var(--ink);
+        display: grid;
+        gap: 8px;
+      }
+
+      .hero-features li {
+        line-height: 1.5;
+      }
+
+      .hero-features code {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        padding: 2px 8px;
+        border-radius: 8px;
+        font-size: 0.92rem;
       }
 
       form {
@@ -105,20 +144,25 @@
         gap: 8px;
         font-weight: 600;
         font-size: 0.95rem;
+        color: var(--ink);
       }
 
       input {
         width: 100%;
-        border: 1px solid rgba(31, 42, 31, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 14px;
         padding: 13px 14px;
         font: inherit;
-        background: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.05);
         color: var(--ink);
       }
 
+      input::placeholder {
+        color: #8f98a3;
+      }
+
       input:focus {
-        outline: 2px solid rgba(31, 107, 79, 0.18);
+        outline: 2px solid rgba(125, 211, 252, 0.18);
         border-color: var(--accent);
       }
 
@@ -127,18 +171,65 @@
         gap: 14px;
       }
 
+      .section-title {
+        margin: 0 0 12px;
+        font-size: 0.95rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
       .service-card {
         border: 1px solid var(--line);
         border-radius: 18px;
         padding: 16px;
-        background: rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.03);
       }
 
       .service-card strong {
         display: block;
         margin-bottom: 10px;
         font-size: 0.9rem;
-        color: var(--accent-strong);
+        color: #ffffff;
+      }
+
+      .service-card.base-service-card {
+        background: var(--base-card-bg);
+        border-color: var(--base-card-border);
+      }
+
+      .service-card.extra-service-card {
+        background: var(--extra-card-bg);
+        border-color: var(--extra-card-border);
+      }
+
+      .service-subsection {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 14px;
+      }
+
+      .service-subsection + .service-subsection {
+        margin-top: 14px;
+      }
+
+      .service-subsection.non-db-section {
+        background: var(--subsection-non-db-bg);
+        border-color: var(--subsection-non-db-border);
+      }
+
+      .service-subsection.db-section {
+        background: var(--subsection-db-bg);
+        border-color: var(--subsection-db-border);
+      }
+
+      .subsection-title {
+        margin: 0 0 12px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
       }
 
       .actions {
@@ -159,7 +250,7 @@
           var(--accent),
           var(--accent-strong)
         );
-        color: white;
+        color: #081018;
         cursor: pointer;
       }
 
@@ -171,6 +262,14 @@
       .hint {
         color: var(--muted);
         font-size: 0.92rem;
+      }
+
+      .hint code {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        padding: 2px 8px;
+        border-radius: 8px;
       }
 
       .status {
@@ -187,13 +286,31 @@
   <body>
     <main class="shell">
       <section class="hero">
-        <p class="eyebrow">Generator</p>
-        <h3>Build A Fresh Service Pack</h3>
+        <h3>
+          Simple Micro-Service Generator
+          <br />
+          <span style="font-size: 13px; font-weight: 500; color: var(--muted)">
+            By Katili Jiwo
+          </span>
+        </h3>
+
         <p>
-          Generate a downloadable project bundle with <code>auth-service</code>,
-          <code>user-service</code>, shared Traefik routing, Docker Compose, and
-          any extra services you want scaffolded from the current template.
+          Generate a simple downloadable Go-Fiber microservice starter bundle
         </p>
+
+        <ul class="hero-features">
+          <li><code>Clean Architecture foundation</code></li>
+          <li><code>Traefik gateway</code></li>
+          <li>
+            <code>Scaffold extra services from the current template</code>
+          </li>
+          <li>
+            <code>Predefined auth-service and user-service</code>
+            <span style="color: #fca5a5; font-weight: 600">
+              (for a simpler setup)
+            </span>
+          </li>
+        </ul>
       </section>
 
       <form id="generator-form">
@@ -222,17 +339,80 @@
         </div>
 
         <section>
+          <h2 class="section-title">Base Service Databases</h2>
+          <div class="services">
+            <div class="service-card base-service-card">
+              <strong>auth-service</strong>
+              <div class="grid">
+                <label>
+                  Host
+                  <input id="auth-db-host" placeholder="localhost" required />
+                </label>
+                <label>
+                  Port <input id="auth-db-port" placeholder="5432" required />
+                </label>
+                <label>
+                  Database
+                  <input
+                    id="auth-db-name"
+                    placeholder="somedatabase"
+                    required
+                  />
+                </label>
+                <label>
+                  Username
+                  <input id="auth-db-user" placeholder="postgres" required />
+                </label>
+                <label>
+                  Password
+                  <input id="auth-db-password" placeholder="your-password" />
+                </label>
+              </div>
+            </div>
+            <div class="service-card base-service-card">
+              <strong>user-service</strong>
+              <div class="grid">
+                <label>
+                  Host
+                  <input id="user-db-host" placeholder="localhost" required />
+                </label>
+                <label>
+                  Port <input id="user-db-port" placeholder="5432" required />
+                </label>
+                <label>
+                  Database
+                  <input
+                    id="user-db-name"
+                    placeholder="somedatabase"
+                    required
+                  />
+                </label>
+                <label>
+                  Username
+                  <input id="user-db-user" placeholder="postgres" required />
+                </label>
+                <label>
+                  Password
+                  <input id="user-db-password" placeholder="your-password" />
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="section-title">Extra Services</h2>
           <div class="services" id="services"></div>
         </section>
 
         <div class="actions">
-          <button id="generate-button" type="submit">
+          <button id="generate-button" type="submit" style="color: lightgrey">
             Generate Project Zip
           </button>
-          <span class="hint"
-            >Service names are slugified automatically. Reserved names:
-            <code>auth</code>, <code>user</code>.</span
-          >
+          <span class="hint">
+            Service names are slugified automatically. Reserved names:
+            <code>auth</code>, <code>user</code>.
+          </span>
         </div>
 
         <div class="status" id="status"></div>
@@ -252,22 +432,52 @@
 
         for (let i = 0; i < count; i += 1) {
           const card = document.createElement("div");
-          card.className = "service-card";
+          card.className = "service-card extra-service-card";
           card.innerHTML = `
           <strong>Service ${i + 1}</strong>
-          <div class="grid">
-            <label>
-              Service Name
-              <input name="service-name" placeholder="inventory" required>
-            </label>
-            <label>
-              HTTP Port
-              <input name="http-port" type="number" min="7000" max="7999" placeholder="auto">
-            </label>
-            <label>
-              gRPC Port
-              <input name="grpc-port" type="number" min="57000" max="59999" placeholder="auto">
-            </label>
+
+          <div class="service-subsection non-db-section">
+            <h4 class="subsection-title">Service Config</h4>
+            <div class="grid">
+              <label>
+                Service Name
+                <input name="service-name" placeholder="inventory" required>
+              </label>
+              <label>
+                HTTP Port
+                <input name="http-port" type="number" min="7000" max="7999" placeholder="auto">
+              </label>
+              <label>
+                gRPC Port
+                <input name="grpc-port" type="number" min="57000" max="59999" placeholder="auto">
+              </label>
+            </div>
+          </div>
+
+          <div class="service-subsection db-section">
+            <h4 class="subsection-title">Database Config</h4>
+            <div class="grid">
+              <label>
+                DB Host
+                <input name="db-host" placeholder="localhost" required>
+              </label>
+              <label>
+                DB Port
+                <input name="db-port" placeholder="5432" required>
+              </label>
+              <label>
+                DB Name
+                <input name="db-name" placeholder="somedatabase" required>
+              </label>
+              <label>
+                DB Username
+                <input name="db-user" placeholder="postgres" required>
+              </label>
+              <label>
+                DB Password
+                <input name="db-password" placeholder="your-password">
+              </label>
+            </div>
           </div>
         `;
           servicesEl.appendChild(card);
@@ -286,7 +496,22 @@
         const projectName = document
           .getElementById("project-name")
           .value.trim();
+        const authDb = {
+          host: document.getElementById("auth-db-host").value.trim(),
+          port: document.getElementById("auth-db-port").value.trim(),
+          database: document.getElementById("auth-db-name").value.trim(),
+          username: document.getElementById("auth-db-user").value.trim(),
+          password: document.getElementById("auth-db-password").value,
+        };
+        const userDb = {
+          host: document.getElementById("user-db-host").value.trim(),
+          port: document.getElementById("user-db-port").value.trim(),
+          database: document.getElementById("user-db-name").value.trim(),
+          username: document.getElementById("user-db-user").value.trim(),
+          password: document.getElementById("user-db-password").value,
+        };
         const services = Array.from(document.querySelectorAll(".service-card"))
+          .filter((card) => card.querySelector('input[name="service-name"]'))
           .map((card) => ({
             name: card.querySelector('input[name="service-name"]').value.trim(),
             httpPort: card
@@ -295,6 +520,17 @@
             grpcPort: card
               .querySelector('input[name="grpc-port"]')
               .value.trim(),
+            db: {
+              host: card.querySelector('input[name="db-host"]').value.trim(),
+              port: card.querySelector('input[name="db-port"]').value.trim(),
+              database: card
+                .querySelector('input[name="db-name"]')
+                .value.trim(),
+              username: card
+                .querySelector('input[name="db-user"]')
+                .value.trim(),
+              password: card.querySelector('input[name="db-password"]').value,
+            },
           }))
           .filter((service) => service.name);
 
@@ -313,7 +549,7 @@
           const response = await fetch("/generate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ projectName, services }),
+            body: JSON.stringify({ projectName, authDb, userDb, services }),
           });
 
           if (!response.ok) {
