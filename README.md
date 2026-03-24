@@ -26,7 +26,7 @@ Live Generator app:
 
 ## How to Use
 
-1. Firt open the [Live Generator App](https://jiwomdf.github.io/go-fiber-microservice-generator/), fill in the required service details, and click `Generate`.
+1. First open the [Live Generator App](https://jiwomdf.github.io/go-fiber-microservice-generator/), fill in the required service details, and click `Generate`.
 
 2. Extract the downloaded ZIP file, then navigate to the project directory and run the following command:
 
