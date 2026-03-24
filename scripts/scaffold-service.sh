@@ -156,6 +156,7 @@ entity_pascal="$(pascal_case "$entity")"
 entity_plural="${entity}s"
 entity_plural_pascal="${entity_pascal}s"
 service_name="${entity}-service"
+entity_upper="$(printf '%s' "$entity" | tr '[:lower:]' '[:upper:]')"
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
@@ -261,6 +262,7 @@ replace_all "$target_dir/config.dev.yaml" 'grpc_port: "57705"' "grpc_port: \"${g
 replace_all "$target_dir/config.local.yaml" 'grpc_port: "57705"' "grpc_port: \"${grpc_port}\""
 replace_all "$target_dir/Dockerfile" 'EXPOSE 7705' "EXPOSE ${http_port}"
 replace_all "$target_dir/openapi.yaml" 'url: http://localhost:7704/api/' "url: http://localhost:${http_port}/api/"
+replace_all "$target_dir/domain/errors.go" 'const StatusCodePrefix = "USER"' "const StatusCodePrefix = \"${entity_upper}\""
 
 if [[ "$target_dir" == "$repo_root/"* ]]; then
   append_compose_service
