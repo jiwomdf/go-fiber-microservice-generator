@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Service Generator</title>
+    <style>
+      :root {
+        --bg: #1f1f22;
+        --panel: rgba(38, 38, 42, 0.96);
+        --ink: #c0c2c4;
+        --muted: #b8bec8;
+        --accent: #7181b0;
+        --accent-strong: #525e82;
+        --line: rgba(255, 255, 255, 0.1);
+        --warn: #f87171;
+        --shadow: 0 24px 50px rgba(0, 0, 0, 0.35);
+        --base-card-bg: linear-gradient(
+          135deg,
+          rgba(125, 211, 252, 0.1),
+          rgba(255, 255, 255, 0.03)
+        );
+        --base-card-border: rgba(125, 211, 252, 0.22);
+        --extra-card-bg: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.03),
+          rgba(255, 255, 255, 0.015)
+        );
+        --extra-card-border: rgba(255, 255, 255, 0.12);
+        --subsection-non-db-bg: rgba(125, 211, 252, 0.07);
+        --subsection-non-db-border: rgba(125, 211, 252, 0.18);
+        --subsection-db-bg: rgba(255, 255, 255, 0.035);
+        --subsection-db-border: rgba(255, 255, 255, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(
+            circle at top left,
+            rgba(125, 211, 252, 0.08),
+            transparent 28%
+          ),
+          radial-gradient(
+            circle at bottom right,
+            rgba(255, 255, 255, 0.04),
+            transparent 24%
+          ),
+          linear-gradient(135deg, #18181b 0%, #232326 100%);
+        display: grid;
+        place-items: center;
+        padding: 32px 20px;
+      }
+
+      .shell {
+        width: min(860px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        backdrop-filter: blur(12px);
+      }
+
+      .hero {
+        padding: 34px 34px 20px;
+        background:
+          linear-gradient(
+            135deg,
+            rgba(125, 211, 252, 0.08),
+            rgba(255, 255, 255, 0.02)
+          ),
+          transparent;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h1,
+      h3 {
+        margin: 0;
+        font-family: "IBM Plex Serif", Georgia, serif;
+        line-height: 0.95;
+        color: var(--ink);
+      }
+
+      .hero h3 {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        max-width: 14ch;
+        line-height: 1.05;
+      }
+
+      .hero p {
+        margin: 14px 0 14px;
+        max-width: 62ch;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .hero-features {
+        margin: 0;
+        padding-left: 20px;
+        color: var(--ink);
+        display: grid;
+        gap: 8px;
+      }
+
+      .hero-features li {
+        line-height: 1.5;
+      }
+
+      .hero-features code,
+      .hint code {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        padding: 2px 8px;
+        border-radius: 8px;
+        font-size: 0.92rem;
+      }
+
+      form {
+        padding: 28px 34px 34px;
+        display: grid;
+        gap: 24px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+      }
+
+      .grid-with-apply {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(180px, 1fr)) auto;
+        gap: 18px;
+        align-items: end;
+      }
+
+      label {
+        display: grid;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: var(--ink);
+      }
+
+      input {
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+        padding: 13px 14px;
+        font: inherit;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--ink);
+      }
+
+      input::placeholder {
+        color: #8f98a3;
+      }
+
+      input:focus {
+        outline: 2px solid rgba(125, 211, 252, 0.18);
+        border-color: var(--accent);
+      }
+
+      .services {
+        display: grid;
+        gap: 14px;
+      }
+
+      .section-title {
+        margin: 0 0 12px;
+        font-size: 0.95rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      .service-card {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .service-card strong {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+        color: #ffffff;
+      }
+
+      .service-card.base-service-card {
+        background: var(--base-card-bg);
+        border-color: var(--base-card-border);
+      }
+
+      .service-card.extra-service-card {
+        background: var(--extra-card-bg);
+        border-color: var(--extra-card-border);
+      }
+
+      .service-subsection {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 14px;
+      }
+
+      .service-subsection + .service-subsection {
+        margin-top: 14px;
+      }
+
+      .service-subsection.non-db-section {
+        background: var(--subsection-non-db-bg);
+        border-color: var(--subsection-non-db-border);
+      }
+
+      .service-subsection.db-section {
+        background: var(--subsection-db-bg);
+        border-color: var(--subsection-db-border);
+      }
+
+      .subsection-title {
+        margin: 0 0 12px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 14px 22px;
+        font: inherit;
+        font-weight: 700;
+        background: linear-gradient(
+          135deg,
+          var(--accent),
+          var(--accent-strong)
+        );
+        color: #081018;
+        cursor: pointer;
+      }
+
+      button[disabled] {
+        cursor: wait;
+        opacity: 0.7;
+      }
+
+      .apply-button {
+        color: lightgrey;
+        white-space: nowrap;
+      }
+
+      .hint {
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .status {
+        min-height: 1.2em;
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+
+      .status.error {
+        color: var(--warn);
+      }
+
+      @media (max-width: 760px) {
+        .grid-with-apply {
+          grid-template-columns: 1fr;
+        }
+
+        .apply-button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <h3>
+          Simple Micro-Service Generator
+          <br />
+          <span style="font-size: 13px; font-weight: 500; color: var(--muted)">
+            By Katili Jiwo
+          </span>
+        </h3>
+
+        <p>
+          Generate a downloadable Go-Fiber microservice starter bundle directly
+          in the browser
+        </p>
+
+        <ul class="hero-features">
+          <li><code>Browser-only generation</code></li>
+          <li><code>Template files fetched from GitHub</code></li>
+          <li><code>Clean Architecture foundation</code></li>
+          <li><code>Traefik gateway</code></li>
+          <li><code>Predefined auth-service</code></li>
+        </ul>
+      </section>
+
+      <form id="generator-form">
+        <div class="grid-with-apply">
+          <label>
+            Project Name
+            <input
+              id="project-name"
+              name="project-name"
+              placeholder="some-platform"
+              required
+            />
+          </label>
+          <label>
+            Traefik Port
+            <input
+              id="traefik-port"
+              name="traefik-port"
+              type="number"
+              min="1"
+              max="65535"
+              placeholder="8000"
+              required
+            />
+          </label>
+          <label>
+            Number Of New Services
+            <input
+              id="service-count"
+              name="service-count"
+              type="number"
+              min="0"
+              max="20"
+              placeholder="e.g. 3"
+              required
+            />
+          </label>
+          <button id="apply-services-button" type="button" class="apply-button">
+            Apply
+          </button>
+        </div>
+
+        <section>
+          <h2 class="section-title">Base Service Config</h2>
+          <div class="services">
+            <div class="service-card base-service-card">
+              <strong>auth-service</strong>
+              <div class="grid">
+                <label>
+                  HTTP Port
+                  <input id="auth-http-port" placeholder="7704" required />
+                </label>
+                <label>
+                  gRPC Port
+                  <input id="auth-grpc-port" placeholder="57704" required />
+                </label>
+                <label>
+                  DB Host
+                  <input id="auth-db-host" placeholder="localhost" required />
+                </label>
+                <label>
+                  DB Port
+                  <input id="auth-db-port" placeholder="5432" required />
+                </label>
+                <label>
+                  DB Name
+                  <input
+                    id="auth-db-name"
+                    placeholder="somedatabase"
+                    required
+                  />
+                </label>
+                <label>
+                  DB Username
+                  <input id="auth-db-user" placeholder="postgres" required />
+                </label>
+                <label>
+                  DB Password
+                  <input id="auth-db-password" placeholder="your-password" />
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="section-title">Extra Services</h2>
+          <div class="services" id="services"></div>
+        </section>
+
+        <div class="actions">
+          <button id="generate-button" type="submit" style="color: lightgrey">
+            Generate Project Zip
+          </button>
+          <span class="hint">
+            Service names are slugified automatically. Reserved names:
+            <code>auth</code>.
+          </span>
+        </div>
+
+        <div class="status" id="status"></div>
+      </form>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

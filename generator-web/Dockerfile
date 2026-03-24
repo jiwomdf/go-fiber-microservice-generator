@@ -1,28 +1,19 @@
-FROM golang:1.25-alpine AS builder
+FROM node:22-alpine AS builder
 
-WORKDIR /src/generator-web
+WORKDIR /app
 
-COPY generator-web/go.mod ./
-RUN go mod download
+COPY generator-web/package.json ./
+RUN npm install
 
-COPY generator-web/. .
-RUN CGO_ENABLED=0 GOOS=linux go build -o /out/generator-web .
+COPY generator-web/index.html ./
+COPY generator-web/tsconfig.json ./
+COPY generator-web/src ./src
 
-FROM alpine:3.21
+RUN npm run build
 
-WORKDIR /template
+FROM nginx:1.27-alpine
 
-RUN apk add --no-cache bash ca-certificates perl python3 rsync
-
-COPY --from=builder /out/generator-web /usr/local/bin/generator-web
-COPY auth-service ./auth-service
-COPY user-service ./user-service
-COPY scripts ./scripts
-COPY traefik ./traefik
-COPY docker-compose.yml ./docker-compose.yml
-
-ENV REPO_ROOT=/template
+COPY generator-web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 8090
-
-CMD ["generator-web"]

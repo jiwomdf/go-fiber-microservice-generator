@@ -32,8 +32,5 @@ Thumbs.db
 
 # Environment and local configuration files
 .env
-config.yaml
-config.local.yaml
-config.prod.yaml
 
 *.csv
