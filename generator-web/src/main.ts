@@ -553,7 +553,7 @@ function updateComposeServiceEnv(
     }
 
     if (trimmed.startsWith("POSTGRES_HOST:")) {
-      lines[index] = `      POSTGRES_HOST: "${db.host}"`;
+      lines[index] = `      POSTGRES_HOST: "host.docker.internal"`;
     } else if (trimmed.startsWith("POSTGRES_PORT:")) {
       lines[index] = `      POSTGRES_PORT: "${db.port}"`;
     } else if (trimmed.startsWith("POSTGRES_DATABASE:")) {
@@ -567,7 +567,51 @@ function updateComposeServiceEnv(
     }
   }
 
-  setFile(files, path, lines.join("\n"));
+  setFile(files, path, ensureComposeServiceExtraHosts(lines.join("\n"), serviceName));
+}
+
+function ensureComposeServiceExtraHosts(text: string, serviceName: string): string {
+  const lines = text.split("\n");
+  const output: string[] = [];
+  let currentService = "";
+  let inserted = false;
+  let hasExtraHosts = false;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const match = line.match(/^  ([a-z0-9-]+):\s*$/);
+    if (match) {
+      if (currentService === serviceName && !inserted && !hasExtraHosts) {
+        output.push("    extra_hosts:");
+        output.push('      - "host.docker.internal:host-gateway"');
+      }
+      currentService = match[1];
+      inserted = false;
+      hasExtraHosts = false;
+      output.push(line);
+      continue;
+    }
+
+    if (currentService === serviceName) {
+      if (line.trim() === "extra_hosts:") {
+        hasExtraHosts = true;
+      }
+      if (!inserted && !hasExtraHosts && line.trim() === "ports:") {
+        output.push("    extra_hosts:");
+        output.push('      - "host.docker.internal:host-gateway"');
+        inserted = true;
+      }
+    }
+
+    output.push(line);
+  }
+
+  if (currentService === serviceName && !inserted && !hasExtraHosts) {
+    output.push("    extra_hosts:");
+    output.push('      - "host.docker.internal:host-gateway"');
+  }
+
+  return output.join("\n");
 }
 
 function updateServiceConfig(
@@ -618,13 +662,15 @@ function appendComposeService(
       context: ./${serviceName}
     container_name: ${serviceName}
     environment:
-      POSTGRES_HOST: "${db.host}"
+      POSTGRES_HOST: "host.docker.internal"
       POSTGRES_PORT: "${db.port}"
       POSTGRES_DATABASE: "${db.database}"
       POSTGRES_USER: "${db.username}"
       POSTGRES_PASSWORD: "${db.password}"
       POSTGRES_SCHEMA: public
       SERVER_HTTP_PORT: "${httpPort}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${httpPort}:${httpPort}"
 `;
