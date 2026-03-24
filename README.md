@@ -33,3 +33,39 @@ Live Generator app:
 ```bash
 docker compose up --build
 ```
+
+## Graph of the microservices with Traefik
+
+```mermaid
+flowchart LR
+    C[Client]
+    T[Traefik :8000]
+    A[auth-service :7704]
+    G1[generated-service-1 :<port>]
+    G2[generated-service-2 :<port>]
+
+    C -->|POST /api/v1/login| T
+    T -->|rewrite to /api/auth-service/v1/login| A
+    A -->|JWT token| T
+    T --> C
+
+    C -->|Public auth routes\n/api/v1/auth...| T
+    T -->|rewrite to /api/auth-service/v1/auth...| A
+    A --> T
+    T --> C
+
+    C -->|Protected routes\n/api/v1/<entity-1>...| T
+    T -->|ForwardAuth verify\nAuthorization header| A
+    A -->|200 OK / 401 / 403| T
+    T -->|if valid:\nrewrite to /api/generated-service-1/v1/<entity-1>...| G1
+    G1 --> T
+    T --> C
+
+    C -->|Protected routes\n/api/v1/<entity-2>...| T
+    T -->|ForwardAuth verify\nAuthorization header| A
+    A -->|200 OK / 401 / 403| T
+    T -->|if valid:\nrewrite to /api/generated-service-2/v1/<entity-2>...| G2
+    G2 --> T
+    T --> C
+
+```
