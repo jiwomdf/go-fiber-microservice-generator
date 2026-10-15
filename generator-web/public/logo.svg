@@ -1,132 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
   <defs>
-    <!-- Modern Tech Gradients -->
-    <linearGradient id="g-cyan-indigo" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#00ADD8" />
-      <stop offset="50%" stop-color="#4F46E5" />
-      <stop offset="100%" stop-color="#7C3AED" />
+    <linearGradient id="astroid-brand-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#4f46e5" />
     </linearGradient>
-
-    <linearGradient id="cube-top-1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38BDF8" />
-      <stop offset="100%" stop-color="#0284C7" />
+    <linearGradient id="astroid-brand-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e1b4b" />
     </linearGradient>
-
-    <linearGradient id="cube-left-1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0284C7" />
-      <stop offset="100%" stop-color="#0369A1" />
-    </linearGradient>
-
-    <linearGradient id="cube-right-1" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0EA5E9" />
-      <stop offset="100%" stop-color="#0284C7" />
-    </linearGradient>
-
-    <linearGradient id="cube-top-2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#818CF8" />
-      <stop offset="100%" stop-color="#4F46E5" />
-    </linearGradient>
-
-    <linearGradient id="cube-left-2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4F46E5" />
-      <stop offset="100%" stop-color="#3730A3" />
-    </linearGradient>
-
-    <linearGradient id="cube-right-2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6366F1" />
-      <stop offset="100%" stop-color="#4338CA" />
-    </linearGradient>
-
-    <linearGradient id="cube-top-3" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#C084FC" />
-      <stop offset="100%" stop-color="#9333EA" />
-    </linearGradient>
-
-    <linearGradient id="cube-left-3" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#9333EA" />
-      <stop offset="100%" stop-color="#6B21A8" />
-    </linearGradient>
-
-    <linearGradient id="cube-right-3" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#A855F7" />
-      <stop offset="100%" stop-color="#7E22CE" />
-    </linearGradient>
-
-    <!-- Fiber Speed Core Glow -->
-    <linearGradient id="fiber-core" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38BDF8" />
-      <stop offset="50%" stop-color="#818CF8" />
-      <stop offset="100%" stop-color="#F43F5E" />
-    </linearGradient>
-
-    <!-- Subtle Glow Shadow Filter -->
-    <filter id="soft-glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#4F46E5" flood-opacity="0.32" />
-    </filter>
   </defs>
 
-  <!-- Ambient Backdrop Circle / Shield -->
-  <rect width="512" height="512" rx="128" fill="#0F172A" />
+  <!-- Squircle Emblem Frame -->
+  <rect width="128" height="128" rx="32" fill="url(#astroid-brand-bg)" stroke="#4f46e5" stroke-width="2.5" stroke-opacity="0.5" />
 
-  <!-- Outer Network Grid Accents -->
-  <g opacity="0.15" stroke="#818CF8" stroke-width="1.5" stroke-dasharray="4 4">
-    <circle cx="256" cy="256" r="190" />
-    <circle cx="256" cy="256" r="130" />
-    <line x1="256" y1="40" x2="256" y2="472" />
-    <line x1="40" y1="256" x2="472" y2="256" />
-  </g>
-
-  <!-- Interconnection Bus Lines (Microservice Mesh) -->
-  <g stroke="url(#g-cyan-indigo)" stroke-width="4" stroke-linecap="round" opacity="0.65">
-    <path d="M 256 120 L 150 290" />
-    <path d="M 256 120 L 362 290" />
-    <path d="M 150 290 L 362 290" />
-    <!-- Fiber Speed Rings / Data packets -->
-    <circle cx="203" cy="205" r="5" fill="#38BDF8" />
-    <circle cx="309" cy="205" r="5" fill="#C084FC" />
-    <circle cx="256" cy="290" r="5" fill="#818CF8" />
-  </g>
-
-  <!-- Isometric Node 1: Top Gateway / Router (Cyan - Go Energy) -->
-  <g filter="url(#soft-glow)" transform="translate(256, 130)">
-    <!-- Top Face -->
-    <polygon points="0,-48 42,-24 0,0 -42,-24" fill="url(#cube-top-1)" />
-    <!-- Left Face -->
-    <polygon points="-42,-24 0,0 0,48 -42,24" fill="url(#cube-left-1)" />
-    <!-- Right Face -->
-    <polygon points="0,0 42,-24 42,24 0,48" fill="url(#cube-right-1)" />
-    <!-- Center Fiber Conduit Highlight -->
-    <circle cx="0" cy="0" r="4" fill="#E0F2FE" />
-  </g>
-
-  <!-- Isometric Node 2: Bottom-Left Service Node (Indigo - Fiber Framework) -->
-  <g filter="url(#soft-glow)" transform="translate(160, 296)">
-    <!-- Top Face -->
-    <polygon points="0,-48 42,-24 0,0 -42,-24" fill="url(#cube-top-2)" />
-    <!-- Left Face -->
-    <polygon points="-42,-24 0,0 0,48 -42,24" fill="url(#cube-left-2)" />
-    <!-- Right Face -->
-    <polygon points="0,0 42,-24 42,24 0,48" fill="url(#cube-right-2)" />
-    <circle cx="0" cy="0" r="4" fill="#EEF2FF" />
-  </g>
-
-  <!-- Isometric Node 3: Bottom-Right Data/Service Node (Violet - Storage & gRPC) -->
-  <g filter="url(#soft-glow)" transform="translate(352, 296)">
-    <!-- Top Face -->
-    <polygon points="0,-48 42,-24 0,0 -42,-24" fill="url(#cube-top-3)" />
-    <!-- Left Face -->
-    <polygon points="-42,-24 0,0 0,48 -42,30" fill="url(#cube-left-3)" />
-    <!-- Right Face -->
-    <polygon points="0,0 42,-24 42,24 0,48" fill="url(#cube-right-3)" />
-    <circle cx="0" cy="0" r="4" fill="#FAF5FF" />
-  </g>
-
-  <!-- Central Dynamic "G" & Fiber Speed Lightning Loop -->
-  <g filter="url(#soft-glow)">
-    <!-- Central Pulsing Node Core -->
-    <circle cx="256" cy="245" r="24" fill="#0F172A" stroke="url(#fiber-core)" stroke-width="4" />
-    <!-- Geometric Go "G" / Bolt mark -->
-    <path d="M 266 233 L 246 245 L 258 247 L 246 259" stroke="#38BDF8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  <!-- Lucide Astroid (24x24 scaled to 88x88 centered at (20, 20)) -->
+  <g transform="translate(20, 20) scale(3.666)">
+    <path
+      d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203"
+      stroke="url(#astroid-brand-grad)"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      fill="rgba(56, 189, 248, 0.12)"
+    />
+    <circle cx="12" cy="12" r="1.5" fill="#38bdf8" />
   </g>
 </svg>
-

@@ -8,8 +8,9 @@
   <meta name="description"
     content="Scaffold a production-ready Go-Fiber microservice starter bundle with Clean Architecture, gRPC, PostgreSQL, and optional Traefik routing." />
 
+  <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="apple-touch-icon" href="/logo.jpg" />
+  <link rel="apple-touch-icon" href="/icon.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -48,9 +49,6 @@
     .top-navbar {
       background: #ffffff;
       border-bottom: 1px solid #e2e8f0;
-      position: sticky;
-      top: 0;
-      z-index: 50;
     }
 
     .nav-container {
@@ -71,15 +69,30 @@
       color: inherit;
     }
 
-    .nav-logo {
+    .nav-logo-badge {
       width: 40px;
       height: 40px;
       border-radius: 10px;
-      object-fit: cover;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      border: 1px solid rgba(79, 70, 229, 0.4);
       box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
-      border: 1px solid rgba(226, 232, 240, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #38bdf8;
       flex-shrink: 0;
-      display: block;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .nav-brand:hover .nav-logo-badge {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+      color: #67e8f9;
+    }
+
+    .nav-astroid-icon {
+      width: 22px;
+      height: 22px;
     }
 
     .nav-brand-text {
@@ -234,7 +247,7 @@
     @media (min-width: 1024px) {
       .preview-column {
         position: sticky;
-        top: 76px;
+        top: 24px;
       }
     }
 
@@ -937,7 +950,11 @@
   <header class="top-navbar">
     <div class="nav-container">
       <a class="nav-brand" href="/">
-        <img src="/logo.jpg" alt="Go-Fiber Generator Logo" class="nav-logo" width="40" height="40" />
+        <div class="nav-logo-badge" title="Go-Fiber Microservice Generator">
+          <svg class="nav-astroid-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203" />
+          </svg>
+        </div>
         <div class="nav-brand-text">
           <span class="nav-title">Go-Fiber Generator</span>
           <span class="nav-sub">Clean Architecture &bull; Fiber v2 &bull; gRPC</span>
@@ -999,13 +1016,26 @@
           </div>
         </div>
 
-        <!-- Extra Service Count -->
+        <!-- Scaffold Setup -->
         <div class="panel-block compact">
           <span class="block-kicker">Scaffold Setup</span>
-          <h2 class="block-title">Extra service count</h2>
+          <h2 class="block-title">Services to scaffold</h2>
           <p class="block-desc">
-            Set how many new microservices you want, then apply to reveal the service fields.
+            Choose whether to include the core Auth Service and specify how many extra microservices to scaffold.
           </p>
+
+          <div style="margin-bottom: 16px">
+            <div class="toggle-card">
+              <div class="toggle-info">
+                <span class="toggle-label">Include Auth Service</span>
+                <span class="toggle-desc">Core JWT authentication & user management service</span>
+              </div>
+              <label class="switch" for="include-auth-service" aria-label="Toggle Auth Service">
+                <input id="include-auth-service" type="checkbox" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
 
           <div class="service-count-row">
             <label>
@@ -1025,17 +1055,8 @@
             <div>
               <h2 class="section-title">Auth Service</h2>
               <div class="section-meta">
-                Core authentication and authorization service (optional)
+                Core authentication and authorization service configuration
               </div>
-            </div>
-            <div class="toggle-card compact-toggle">
-              <div class="toggle-info">
-                <span class="toggle-label">Include Auth Service</span>
-              </div>
-              <label class="switch" for="include-auth-service" aria-label="Toggle Auth Service">
-                <input id="include-auth-service" type="checkbox" />
-                <span class="slider"></span>
-              </label>
             </div>
           </div>
 
@@ -1150,7 +1171,6 @@
         <section id="structure-preview-section" class="structure-preview-block">
           <div class="structure-header">
             <div class="structure-header-left">
-              <span class="block-kicker">Bundle Blueprint</span>
               <h2 class="block-title">Project Structure Preview</h2>
             </div>
             <div class="structure-header-right">

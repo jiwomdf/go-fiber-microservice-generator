@@ -1160,6 +1160,10 @@ async function generateProject(event: SubmitEvent): Promise<void> {
   }
 }
 
+const baseServiceSection = document.getElementById("base-service-section");
+const extraServicesSection = document.getElementById("extra-services-section");
+const readyToGenerateCard = document.getElementById("ready-to-generate-card");
+
 const includeAuthCheckbox = document.getElementById(
   "include-auth-service",
 ) as HTMLInputElement | null;
@@ -1168,10 +1172,25 @@ const baseServiceContainer = document.getElementById(
 ) as HTMLDivElement | null;
 
 includeAuthCheckbox?.addEventListener("change", () => {
+  const isChecked = includeAuthCheckbox.checked;
+  if (baseServiceSection) {
+    if (isChecked) {
+      baseServiceSection.classList.remove("hidden");
+    } else {
+      baseServiceSection.classList.add("hidden");
+    }
+  }
   if (baseServiceContainer) {
-    baseServiceContainer.style.display = includeAuthCheckbox.checked
-      ? ""
-      : "none";
+    baseServiceContainer.style.display = isChecked ? "" : "none";
+  }
+  const count = Number(countEl?.value || 0);
+  if (isChecked || count > 0) {
+    readyToGenerateCard?.classList.remove("hidden");
+  } else {
+    const extraCards = document.querySelectorAll(".extra-service-card");
+    if (extraCards.length === 0) {
+      readyToGenerateCard?.classList.add("hidden");
+    }
   }
   renderProjectTree();
 });
@@ -1193,6 +1212,13 @@ includeTraefikCheckbox?.addEventListener("change", () => {
 });
 
 // Initialize initial display states
+if (baseServiceSection && includeAuthCheckbox) {
+  if (includeAuthCheckbox.checked) {
+    baseServiceSection.classList.remove("hidden");
+  } else {
+    baseServiceSection.classList.add("hidden");
+  }
+}
 if (baseServiceContainer && includeAuthCheckbox) {
   baseServiceContainer.style.display = includeAuthCheckbox.checked
     ? ""
@@ -1204,12 +1230,11 @@ if (traefikPortContainer && includeTraefikCheckbox) {
     : "none";
 }
 
-const baseServiceSection = document.getElementById("base-service-section");
-const extraServicesSection = document.getElementById("extra-services-section");
-const readyToGenerateCard = document.getElementById("ready-to-generate-card");
-
 function showConfigSections(): void {
-  baseServiceSection?.classList.remove("hidden");
+  const isAuthEnabled = includeAuthCheckbox?.checked ?? false;
+  if (isAuthEnabled) {
+    baseServiceSection?.classList.remove("hidden");
+  }
   extraServicesSection?.classList.remove("hidden");
   readyToGenerateCard?.classList.remove("hidden");
 }
