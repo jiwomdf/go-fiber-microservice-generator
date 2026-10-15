@@ -90,11 +90,11 @@ function renderServiceInputs(): void {
           </label>
           <label>
             HTTP Port
-            <input name="http-port" min="0" max="65535" placeholder="auto">
+            <input name="http-port" placeholder="auto">
           </label>
           <label>
             gRPC Port
-            <input name="grpc-port" min="0" max="65535" placeholder="auto">
+            <input name="grpc-port" placeholder="auto">
           </label>
         </div>
       </div>
@@ -227,12 +227,7 @@ function normalizeDbConfig(label: string, db: DatabaseConfig): DatabaseConfig {
   return normalized;
 }
 
-function parsePort(
-  raw: string,
-  min: number,
-  max: number,
-  label: string,
-): number {
+function parsePort(raw: string, label: string): number {
   if (!raw.trim()) {
     return 0;
   }
@@ -241,12 +236,7 @@ function parsePort(
     throw new Error(`${label} must be a number`);
   }
 
-  const port = Number(raw.trim());
-  if (port < min || port > max) {
-    throw new Error(`${label} must be between ${min} and ${max}`);
-  }
-
-  return port;
+  return Number(raw.trim());
 }
 
 function nextUnusedPort(start: number, used: Set<number>): number {
@@ -265,21 +255,22 @@ function normalizeRequest(
   authDbRaw: DatabaseConfig,
   servicesRaw: ServiceInput[],
 ): GenerationRequest {
-  const projectName = slugify(projectNameRaw);
+  const projectName = projectNameRaw.trim()
+    ? slugify(projectNameRaw)
+    : "some-platform";
   if (!projectName) {
-    throw new Error("Project name is required.");
+    throw new Error("Project name must contain letters or numbers.");
   }
   if (servicesRaw.length > 20) {
     throw new Error("Too many services requested.");
   }
 
   const authDb = normalizeDbConfig("auth-service", authDbRaw);
-  const traefikPort =
-    parsePort(traefikPortRaw, 1, 65535, "Traefik port") || 8000;
+  const traefikPort = parsePort(traefikPortRaw, "Traefik port") || 8000;
   const authHttpPort =
-    parsePort(authHttpPortRaw, 7000, 7999, "auth-service http port") || 7704;
+    parsePort(authHttpPortRaw, "auth-service http port") || 7704;
   const authGrpcPort =
-    parsePort(authGrpcPortRaw, 57000, 59999, "auth-service grpc port") || 57704;
+    parsePort(authGrpcPortRaw, "auth-service grpc port") || 57704;
 
   if (traefikPort === authHttpPort) {
     throw new Error(`Traefik port already in use: ${traefikPort}`);
@@ -302,12 +293,7 @@ function normalizeRequest(
     }
 
     const db = normalizeDbConfig(`${serviceName}-service`, raw.db);
-    let httpPort = parsePort(
-      raw.httpPort,
-      7000,
-      7999,
-      `${serviceName} http port`,
-    );
+    let httpPort = parsePort(raw.httpPort, `${serviceName} http port`);
     if (httpPort === 0) {
       nextHttp = nextUnusedPort(nextHttp + 1, usedHttp);
       httpPort = nextHttp;
@@ -316,12 +302,7 @@ function normalizeRequest(
       throw new Error(`HTTP port already in use: ${httpPort}`);
     }
 
-    let grpcPort = parsePort(
-      raw.grpcPort,
-      57000,
-      59999,
-      `${serviceName} grpc port`,
-    );
+    let grpcPort = parsePort(raw.grpcPort, `${serviceName} grpc port`);
     if (grpcPort === 0) {
       nextGrpc = nextUnusedPort(nextGrpc + 1, usedGrpc);
       grpcPort = nextGrpc;
