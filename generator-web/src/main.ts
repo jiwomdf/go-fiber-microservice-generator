@@ -25,6 +25,7 @@ type ServiceSpec = {
 
 type GenerationRequest = {
   projectName: string;
+  includeTraefik: boolean;
   traefikPort: number;
   includeAuth: boolean;
   authHttpPort: number;
@@ -80,21 +81,29 @@ function renderServiceInputs(): void {
     const card = document.createElement("div");
     card.className = "service-card extra-service-card";
     card.innerHTML = `
-      <strong>Service ${i + 1}</strong>
+      <div class="service-card-header">
+        <div class="service-card-title">
+          <span class="service-pill">Microservice</span>
+          <strong>Service ${i + 1}</strong>
+        </div>
+      </div>
 
       <div class="service-subsection non-db-section">
         <h4 class="subsection-title">Service Config</h4>
         <div class="grid">
           <label>
             Service Name
+            <span class="label-caption">Unique entity name (e.g. inventory)</span>
             <input name="service-name" placeholder="inventory" required>
           </label>
           <label>
             HTTP Port
+            <span class="label-caption">REST/HTTP application port</span>
             <input name="http-port" placeholder="auto">
           </label>
           <label>
             gRPC Port
+            <span class="label-caption">Internal gRPC port</span>
             <input name="grpc-port" placeholder="auto">
           </label>
         </div>
@@ -105,27 +114,35 @@ function renderServiceInputs(): void {
         <div class="grid">
           <label>
             DB Host
+            <span class="label-caption">Database host</span>
             <input name="db-host" placeholder="localhost">
           </label>
           <label>
             DB Port
+            <span class="label-caption">PostgreSQL port</span>
             <input name="db-port" placeholder="5432">
           </label>
           <label>
             DB Name
+            <span class="label-caption">Target database name</span>
             <input name="db-name" placeholder="somedatabase">
           </label>
           <label>
             DB Username
+            <span class="label-caption">Database username</span>
             <input name="db-user" placeholder="postgres">
           </label>
           <label>
             DB Password
+            <span class="label-caption">Database password</span>
             <input name="db-password" placeholder="your-password">
           </label>
         </div>
       </div>
     `;
+    card.querySelectorAll("input").forEach((inp) => {
+      inp.addEventListener("input", renderProjectTree);
+    });
     servicesEl.appendChild(card);
   }
 }
@@ -139,8 +156,17 @@ function applyServiceInputs(): void {
   }
 
   renderServiceInputs();
+  const authCheckbox = document.getElementById(
+    "include-auth-service",
+  ) as HTMLInputElement | null;
+  const isAuthEnabled = authCheckbox?.checked ?? false;
+
   if (count === 0) {
-    setStatus("Auth-only project is ready to generate.");
+    if (isAuthEnabled) {
+      setStatus("Auth-only project is ready to generate.");
+    } else {
+      setStatus("Add at least one extra service or include Auth Service.");
+    }
     return;
   }
 
@@ -242,6 +268,7 @@ function nextUnusedPort(start: number, used: Set<number>): number {
 
 function normalizeRequest(
   projectNameRaw: string,
+  includeTraefik: boolean,
   traefikPortRaw: string,
   includeAuth: boolean,
   authHttpPortRaw: string,
@@ -260,7 +287,7 @@ function normalizeRequest(
   }
   if (!includeAuth && servicesRaw.length === 0) {
     throw new Error(
-      "Please add at least one extra service or include auth-service.",
+      "Please add at least one extra service or include Auth Service.",
     );
   }
 
@@ -273,17 +300,22 @@ function normalizeRequest(
         username: "postgres",
         password: "",
       };
-  const traefikPort = parsePort(traefikPortRaw, "Traefik port") || 8000;
+  const traefikPort = includeTraefik
+    ? parsePort(traefikPortRaw, "Traefik port") || 8000
+    : 0;
   const authHttpPort =
     parsePort(authHttpPortRaw, "auth-service http port") || 7704;
   const authGrpcPort =
     parsePort(authGrpcPortRaw, "auth-service grpc port") || 57704;
 
-  if (includeAuth && traefikPort === authHttpPort) {
+  if (includeTraefik && includeAuth && traefikPort === authHttpPort) {
     throw new Error(`Traefik port already in use: ${traefikPort}`);
   }
 
-  const usedHttp = new Set<number>([7705, traefikPort]);
+  const usedHttp = new Set<number>([7705]);
+  if (includeTraefik) {
+    usedHttp.add(traefikPort);
+  }
   const usedGrpc = new Set<number>([57705]);
   if (includeAuth) {
     usedHttp.add(7704);
@@ -301,7 +333,7 @@ function normalizeRequest(
     }
     if (includeAuth && serviceName === "auth") {
       throw new Error(
-        '"auth" is reserved because the base project already contains auth-service.',
+        '"auth" is reserved because the project contains auth-service.',
       );
     }
 
@@ -340,6 +372,7 @@ function normalizeRequest(
 
   return {
     projectName,
+    includeTraefik,
     traefikPort,
     includeAuth,
     authHttpPort,
@@ -439,6 +472,13 @@ function patchScaffoldScript(files: Map<string, string>): void {
       content,
       'source_dir="$repo_root/user-service"',
       'source_dir="$repo_root/templates/service-template"\nif [[ ! -d "$source_dir" ]]; then\n  source_dir="$repo_root/user-service"\nfi',
+    );
+  }
+  if (content.includes('marker = "\\n  traefik:\\n"')) {
+    content = replaceAllLiteral(
+      content,
+      'marker = "\\n  traefik:\\n"\nif marker not in text:\n    raise SystemExit("could not find traefik service block in docker-compose.yml")\ntext = text.replace(marker, block + marker, 1)',
+      'marker = "\\n  traefik:\\n"\nif marker in text:\n    text = text.replace(marker, block + marker, 1)\nelse:\n    text = text.rstrip() + "\\n" + block + "\\n"',
     );
   }
   setFile(files, path, content);
@@ -760,10 +800,12 @@ function appendComposeService(
     ports:
       - "${httpPort}:${httpPort}"
 `;
-  const compose = getFile(files, "docker-compose.yml").replace(
-    "\n  traefik:\n",
-    `${block}\n  traefik:\n`,
-  );
+  let compose = getFile(files, "docker-compose.yml");
+  if (compose.includes("\n  traefik:\n")) {
+    compose = compose.replace("\n  traefik:\n", `${block}\n  traefik:\n`);
+  } else {
+    compose = `${compose.trimEnd()}\n${block}\n`;
+  }
   setFile(files, "docker-compose.yml", compose);
 }
 
@@ -816,6 +858,7 @@ function scaffoldService(
   files: Map<string, string>,
   spec: ServiceSpec,
   includeAuth = true,
+  includeTraefik = true,
 ): void {
   const entity = spec.name;
   const serviceName = `${entity}-service`;
@@ -935,7 +978,9 @@ function scaffoldService(
   }
 
   appendComposeService(files, serviceName, spec.httpPort, spec.db);
-  appendTraefikRoute(files, entity, serviceName, spec.httpPort, includeAuth);
+  if (includeTraefik) {
+    appendTraefikRoute(files, entity, serviceName, spec.httpPort, includeAuth);
+  }
   updateServiceConfig(
     files,
     serviceName,
@@ -979,6 +1024,23 @@ function removeGeneratedAuthService(files: Map<string, string>): void {
   setFile(files, "traefik/dynamic/routes.yml", routes);
 }
 
+function removeTraefik(files: Map<string, string>): void {
+  for (const path of Array.from(files.keys())) {
+    if (path.startsWith("traefik/")) {
+      files.delete(path);
+    }
+  }
+
+  let compose = getFile(files, "docker-compose.yml");
+  compose = removeServiceBlock(compose, "traefik");
+  compose = compose.replace(/\n\s+- traefik/g, "");
+  setFile(files, "docker-compose.yml", compose);
+}
+
+function cleanEmptyDependsOn(text: string): string {
+  return text.replace(/\n\s+depends_on:\s*\n(?=\s+[a-z])/g, "\n");
+}
+
 async function buildProjectZip(
   request: GenerationRequest,
   updateStatus: (message: string) => void,
@@ -998,17 +1060,32 @@ async function buildProjectZip(
       request.authGrpcPort,
       request.authDb,
     );
-    updateTraefikBasePorts(files, request.authHttpPort);
+    if (request.includeTraefik) {
+      updateTraefikBasePorts(files, request.authHttpPort);
+    }
   } else {
     removeGeneratedAuthService(files);
   }
 
-  updateTraefikPort(files, request.traefikPort);
-
   for (const service of request.services) {
     updateStatus(`Scaffolding ${service.name}-service...`);
-    scaffoldService(files, service, request.includeAuth);
+    scaffoldService(
+      files,
+      service,
+      request.includeAuth,
+      request.includeTraefik,
+    );
   }
+
+  if (request.includeTraefik) {
+    updateTraefikPort(files, request.traefikPort);
+  } else {
+    removeTraefik(files);
+  }
+
+  let compose = getFile(files, "docker-compose.yml");
+  compose = cleanEmptyDependsOn(compose);
+  setFile(files, "docker-compose.yml", compose);
 
   updateStatus("Building zip archive...");
   const zip = new JSZip();
@@ -1050,10 +1127,18 @@ async function generateProject(event: SubmitEvent): Promise<void> {
         document.getElementById(
           "include-auth-service",
         ) as HTMLInputElement | null
+      )?.checked ?? false;
+
+    const includeTraefik =
+      (
+        document.getElementById(
+          "include-traefik",
+        ) as HTMLInputElement | null
       )?.checked ?? true;
 
     const request = normalizeRequest(
       readValue("project-name"),
+      includeTraefik,
       readValue("traefik-port"),
       includeAuth,
       readValue("auth-http-port"),
@@ -1088,10 +1173,372 @@ includeAuthCheckbox?.addEventListener("change", () => {
       ? ""
       : "none";
   }
+  renderProjectTree();
 });
 
-applyServicesButtonEl.addEventListener("click", applyServiceInputs);
+const includeTraefikCheckbox = document.getElementById(
+  "include-traefik",
+) as HTMLInputElement | null;
+const traefikPortContainer = document.getElementById(
+  "traefik-port-container",
+) as HTMLDivElement | null;
+
+includeTraefikCheckbox?.addEventListener("change", () => {
+  if (traefikPortContainer) {
+    traefikPortContainer.style.display = includeTraefikCheckbox.checked
+      ? ""
+      : "none";
+  }
+  renderProjectTree();
+});
+
+// Initialize initial display states
+if (baseServiceContainer && includeAuthCheckbox) {
+  baseServiceContainer.style.display = includeAuthCheckbox.checked
+    ? ""
+    : "none";
+}
+if (traefikPortContainer && includeTraefikCheckbox) {
+  traefikPortContainer.style.display = includeTraefikCheckbox.checked
+    ? ""
+    : "none";
+}
+
+const baseServiceSection = document.getElementById("base-service-section");
+const extraServicesSection = document.getElementById("extra-services-section");
+const readyToGenerateCard = document.getElementById("ready-to-generate-card");
+
+function showConfigSections(): void {
+  baseServiceSection?.classList.remove("hidden");
+  extraServicesSection?.classList.remove("hidden");
+  readyToGenerateCard?.classList.remove("hidden");
+}
+
+function getTreeData(): {
+  projectName: string;
+  includeTraefik: boolean;
+  traefikPort: string;
+  includeAuth: boolean;
+  authHttpPort: string;
+  services: Array<{ name: string; httpPort: string }>;
+} {
+  const rawName = readValue("project-name");
+  const projectName = rawName ? slugify(rawName) : "some-platform";
+
+  const includeTraefik =
+    (document.getElementById("include-traefik") as HTMLInputElement | null)
+      ?.checked ?? true;
+  const traefikPort = readValue("traefik-port") || "8000";
+
+  const includeAuth =
+    (document.getElementById("include-auth-service") as HTMLInputElement | null)
+      ?.checked ?? false;
+  const authHttpPort = readValue("auth-http-port") || "7704";
+
+  const extraCards = Array.from(
+    document.querySelectorAll(".extra-service-card"),
+  );
+  const services: Array<{ name: string; httpPort: string }> = [];
+
+  if (extraCards.length > 0) {
+    extraCards.forEach((card, idx) => {
+      const nameInput = card.querySelector(
+        'input[name="service-name"]',
+      ) as HTMLInputElement | null;
+      const portInput = card.querySelector(
+        'input[name="http-port"]',
+      ) as HTMLInputElement | null;
+      const rawServiceName = nameInput?.value.trim() ?? "";
+      const name = rawServiceName
+        ? slugify(rawServiceName)
+        : `service-${idx + 1}`;
+      const port = portInput?.value.trim() || "auto";
+      services.push({ name, httpPort: port });
+    });
+  } else {
+    const count = Math.max(0, Math.min(20, Number(countEl?.value || 0)));
+    for (let i = 0; i < count; i += 1) {
+      services.push({ name: `service-${i + 1}`, httpPort: "auto" });
+    }
+  }
+
+  return {
+    projectName,
+    includeTraefik,
+    traefikPort,
+    includeAuth,
+    authHttpPort,
+    services,
+  };
+}
+
+function renderProjectTree(): void {
+  const container = document.getElementById("project-tree-container");
+  if (!container) return;
+
+  const {
+    projectName,
+    includeTraefik,
+    traefikPort,
+    includeAuth,
+    authHttpPort,
+    services,
+  } = getTreeData();
+
+  const rootLabel = document.getElementById("tree-root-label");
+  if (rootLabel) {
+    rootLabel.textContent = `${projectName}/`;
+  }
+
+  const totalServices = (includeAuth ? 1 : 0) + services.length;
+  const estFiles =
+    30 +
+    (includeTraefik ? 4 : 0) +
+    (includeAuth ? 28 : 0) +
+    services.length * 28;
+  const statsBadge = document.getElementById("structure-stats-badge");
+  if (statsBadge) {
+    statsBadge.textContent = `${totalServices} service${totalServices === 1 ? "" : "s"}${includeTraefik ? " + Traefik" : ""} • ~${estFiles} files`;
+  }
+
+  const line = (
+    guide: string,
+    icon: string,
+    name: string,
+    badgeType = "",
+    badgeLabel = "",
+    note = "",
+    isFolder = false,
+    isRoot = false,
+  ) => {
+    const nameClass = isRoot
+      ? "tree-root-folder"
+      : isFolder
+        ? "tree-folder"
+        : "tree-file";
+    const badgeHtml = badgeType
+      ? `<span class="tree-badge ${badgeType}">${badgeLabel}</span>`
+      : "";
+    const noteHtml = note ? `<span class="tree-note">${note}</span>` : "";
+    return `<div class="tree-line"><span class="tree-guide">${guide}</span><span class="tree-icon">${icon}</span><span class="${nameClass}">${name}</span>${badgeHtml}${noteHtml}</div>`;
+  };
+
+  const lines: string[] = [];
+  lines.push(line("", "📁", `${projectName}/`, "", "", "", true, true));
+  lines.push(line("├── ", "📁", "scripts/", "", "", "", true));
+  lines.push(
+    line(
+      "│   └── ",
+      "📄",
+      "scaffold-service.sh",
+      "",
+      "",
+      "CLI service generator",
+    ),
+  );
+  lines.push(line("├── ", "📁", "templates/", "", "", "", true));
+  lines.push(
+    line(
+      "│   └── ",
+      "📁",
+      "service-template/",
+      "template",
+      "generator source",
+      "clean architecture blueprint",
+      true,
+    ),
+  );
+
+  if (includeTraefik) {
+    lines.push(
+      line(
+        "├── ",
+        "📁",
+        "traefik/",
+        "gateway",
+        `gateway :${traefikPort}`,
+        "",
+        true,
+      ),
+    );
+    lines.push(line("│   ├── ", "📁", "dynamic/", "", "", "", true));
+    lines.push(line("│   │   ├── ", "📄", "middlewares.yml"));
+    lines.push(line("│   │   └── ", "📄", "routes.yml"));
+    lines.push(line("│   ├── ", "📄", "traefik.yml"));
+    lines.push(line("│   └── ", "📄", "README.md"));
+  }
+
+  if (includeAuth) {
+    lines.push(
+      line(
+        "├── ",
+        "📁",
+        "auth-service/",
+        "auth",
+        `auth HTTP :${authHttpPort}`,
+        "",
+        true,
+      ),
+    );
+    lines.push(line("│   ├── ", "📁", "config/", "", "", "", true));
+    lines.push(
+      line(
+        "│   ├── ",
+        "📁",
+        "data/",
+        "",
+        "",
+        "delivery, repo, usecase",
+        true,
+      ),
+    );
+    lines.push(
+      line("│   ├── ", "📁", "domain/", "", "", "entities & errors", true),
+    );
+    lines.push(line("│   ├── ", "📄", "config.dev.yaml"));
+    lines.push(line("│   ├── ", "📄", "Dockerfile"));
+    lines.push(line("│   ├── ", "📄", "go.mod"));
+    lines.push(line("│   └── ", "📄", "main.go"));
+  }
+
+  services.forEach((s) => {
+    const sName = `${s.name}-service`;
+    lines.push(
+      line(
+        "├── ",
+        "📁",
+        `${sName}/`,
+        "service",
+        `service :${s.httpPort}`,
+        "",
+        true,
+      ),
+    );
+    lines.push(line("│   ├── ", "📁", "config/", "", "", "", true));
+    lines.push(
+      line(
+        "│   ├── ",
+        "📁",
+        "data/",
+        "",
+        "",
+        "delivery, repo, usecase",
+        true,
+      ),
+    );
+    lines.push(
+      line("│   ├── ", "📁", "domain/", "", "", "entities & errors", true),
+    );
+    lines.push(line("│   ├── ", "📄", "config.dev.yaml"));
+    lines.push(line("│   ├── ", "📄", "Dockerfile"));
+    lines.push(line("│   ├── ", "📄", "go.mod"));
+    lines.push(line("│   ├── ", "📄", "openapi.yaml"));
+    lines.push(line("│   └── ", "📄", "main.go"));
+  });
+
+  lines.push(
+    line("├── ", "📄", "docker-compose.yml", "", "", "orchestration"),
+  );
+  lines.push(line("└── ", "📄", "README.md", "", "", "quick start guide"));
+
+  container.innerHTML = lines.join("");
+}
+
+function generateAsciiTree(): string {
+  const {
+    projectName,
+    includeTraefik,
+    traefikPort,
+    includeAuth,
+    authHttpPort,
+    services,
+  } = getTreeData();
+
+  const lines: string[] = [];
+  lines.push(`${projectName}/`);
+  lines.push("├── scripts/");
+  lines.push("│   └── scaffold-service.sh");
+  lines.push("├── templates/");
+  lines.push("│   └── service-template/");
+
+  if (includeTraefik) {
+    lines.push(`├── traefik/                       [gateway :${traefikPort}]`);
+    lines.push("│   ├── dynamic/");
+    lines.push("│   │   ├── middlewares.yml");
+    lines.push("│   │   └── routes.yml");
+    lines.push("│   ├── traefik.yml");
+    lines.push("│   └── README.md");
+  }
+
+  if (includeAuth) {
+    lines.push(
+      `├── auth-service/                  [core auth :${authHttpPort}]`,
+    );
+    lines.push("│   ├── config/");
+    lines.push("│   ├── data/");
+    lines.push("│   ├── domain/");
+    lines.push("│   ├── config.dev.yaml");
+    lines.push("│   ├── Dockerfile");
+    lines.push("│   ├── go.mod");
+    lines.push("│   └── main.go");
+  }
+
+  services.forEach((s) => {
+    lines.push(
+      `├── ${s.name}-service/             [service :${s.httpPort}]`,
+    );
+    lines.push("│   ├── config/");
+    lines.push("│   ├── data/");
+    lines.push("│   ├── domain/");
+    lines.push("│   ├── config.dev.yaml");
+    lines.push("│   ├── Dockerfile");
+    lines.push("│   ├── go.mod");
+    lines.push("│   ├── openapi.yaml");
+    lines.push("│   └── main.go");
+  });
+
+  lines.push("├── docker-compose.yml");
+  lines.push("└── README.md");
+
+  return lines.join("\n");
+}
+
+const copyTreeBtn = document.getElementById("copy-tree-button");
+copyTreeBtn?.addEventListener("click", () => {
+  const ascii = generateAsciiTree();
+  void navigator.clipboard.writeText(ascii).then(() => {
+    const textEl = document.getElementById("copy-tree-text");
+    if (textEl) {
+      const orig = textEl.textContent;
+      textEl.textContent = "Copied!";
+      setTimeout(() => {
+        textEl.textContent = orig;
+      }, 2000);
+    }
+  });
+});
+
+document
+  .getElementById("project-name")
+  ?.addEventListener("input", renderProjectTree);
+document
+  .getElementById("traefik-port")
+  ?.addEventListener("input", renderProjectTree);
+document
+  .getElementById("auth-http-port")
+  ?.addEventListener("input", renderProjectTree);
+document
+  .getElementById("service-count")
+  ?.addEventListener("input", renderProjectTree);
+
+applyServicesButtonEl.addEventListener("click", () => {
+  showConfigSections();
+  applyServiceInputs();
+  renderProjectTree();
+});
+
 formEl.addEventListener("submit", (event) => {
   void generateProject(event as SubmitEvent);
 });
 servicesEl.innerHTML = "";
+renderProjectTree();

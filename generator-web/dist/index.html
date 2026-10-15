@@ -3,12 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Service Generator</title>
+    <title>Go-Fiber Microservice Starter | Belajar Mudah</title>
+    <meta
+      name="description"
+      content="Scaffold a production-ready Go-Fiber microservice starter bundle with Clean Architecture, gRPC, PostgreSQL, and optional Traefik routing."
+    />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap"
       rel="stylesheet"
     />
 
@@ -26,26 +30,147 @@
       body {
         margin: 0;
         min-height: 100vh;
-        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family:
+          "Plus Jakarta Sans",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
         color: #0f172a;
         background-color: #f8fafc;
-        padding: 36px 16px;
         line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Navbar matching Belajar Mudah */
+      .top-navbar {
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+
+      .nav-container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 14px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .nav-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .nav-logo {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+        flex-shrink: 0;
+      }
+
+      .nav-brand-text {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .nav-title {
+        font-family: "Poppins", sans-serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        background: linear-gradient(
+          135deg,
+          #4f46e5 0%,
+          #818cf8 50%,
+          #4f46e5 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1.2;
+      }
+
+      .nav-sub {
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: #64748b;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .nav-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 14px;
+        border-radius: 8px;
+        font-size: 0.84rem;
+        font-weight: 600;
+        text-decoration: none;
+        color: #334155;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        transition: all 0.15s ease;
+      }
+
+      .nav-btn:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+        color: #0f172a;
+      }
+
+      .nav-btn-primary {
+        background: #4f46e5;
+        border-color: #4f46e5;
+        color: #ffffff;
+        box-shadow: 0 1px 2px rgba(79, 70, 229, 0.2);
+      }
+
+      .nav-btn-primary:hover {
+        background: #4338ca;
+        border-color: #4338ca;
+        color: #ffffff;
+      }
+
+      /* Main Shell */
+      .page-wrapper {
+        padding: 32px 16px 56px;
       }
 
       .shell {
         width: 100%;
-        max-width: 860px;
+        max-width: 900px;
         margin: 0 auto;
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        border-radius: 16px;
+        box-shadow:
+          0 1px 3px 0 rgba(0, 0, 0, 0.05),
+          0 10px 25px -5px rgba(15, 23, 42, 0.04);
         overflow: hidden;
       }
 
       .hero {
-        padding: 28px 32px;
+        padding: 32px 36px 28px;
         border-bottom: 1px solid #e2e8f0;
         background: #ffffff;
       }
@@ -55,43 +180,46 @@
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        margin-bottom: 14px;
+        margin-bottom: 12px;
         flex-wrap: wrap;
       }
 
       .hero-badge {
         display: inline-flex;
         align-items: center;
-        padding: 4px 10px;
-        border-radius: 6px;
-        background: #eff6ff;
-        color: #2563eb;
-        font-size: 0.8rem;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 9999px;
+        background: #eef2ff;
+        color: #4338ca;
+        font-size: 0.78rem;
         font-weight: 600;
-        border: 1px solid #dbeafe;
+        border: 1px solid #c7d2fe;
       }
 
       .hero-credit {
-        font-size: 0.85rem;
+        font-size: 0.84rem;
         color: #64748b;
       }
 
       .hero-credit a {
-        color: #2563eb;
+        color: #4f46e5;
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 600;
       }
 
       .hero-credit a:hover {
         text-decoration: underline;
       }
 
-      .hero h3 {
-        margin: 0 0 8px;
-        font-size: 1.65rem;
+      .hero h1 {
+        margin: 0 0 10px;
+        font-family: "Poppins", sans-serif;
+        font-size: 1.75rem;
         font-weight: 700;
         color: #0f172a;
-        line-height: 1.25;
+        line-height: 1.3;
+        letter-spacing: -0.02em;
       }
 
       .hero p {
@@ -99,13 +227,13 @@
         color: #64748b;
         font-size: 0.92rem;
         line-height: 1.6;
-        max-width: 65ch;
+        max-width: 72ch;
       }
 
       .hero a {
-        color: #2563eb;
+        color: #4f46e5;
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 600;
       }
 
       .hero a:hover {
@@ -113,28 +241,29 @@
       }
 
       form {
-        padding: 28px 32px 36px;
+        padding: 28px 36px 36px;
         display: grid;
-        gap: 22px;
+        gap: 24px;
       }
 
       .intro-grid {
         display: grid;
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 18px;
       }
 
-      @media (min-width: 680px) {
+      @media (min-width: 720px) {
         .intro-grid {
-          grid-template-columns: 1.15fr 0.85fr;
+          grid-template-columns: 1.25fr 0.85fr;
         }
       }
 
       .panel-block {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 18px 20px;
+        border-radius: 12px;
+        padding: 20px 22px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
       }
 
       .block-kicker {
@@ -143,14 +272,15 @@
         font-size: 0.72rem;
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        font-weight: 600;
-        color: #2563eb;
+        font-weight: 700;
+        color: #4f46e5;
       }
 
       .block-title {
-        margin: 0 0 4px;
-        font-size: 1rem;
-        font-weight: 600;
+        margin: 0 0 6px;
+        font-family: "Poppins", sans-serif;
+        font-size: 1.05rem;
+        font-weight: 700;
         color: #0f172a;
       }
 
@@ -164,12 +294,6 @@
       .grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 14px;
-      }
-
-      .grid-with-apply {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
         gap: 14px;
       }
 
@@ -187,7 +311,7 @@
         display: grid;
         gap: 5px;
         font-size: 0.86rem;
-        font-weight: 500;
+        font-weight: 600;
         color: #334155;
       }
 
@@ -199,10 +323,10 @@
 
       input {
         width: 100%;
-        height: 38px;
+        height: 40px;
         border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        padding: 6px 12px;
+        border-radius: 8px;
+        padding: 8px 14px;
         font: inherit;
         font-size: 0.88rem;
         color: #0f172a;
@@ -218,27 +342,123 @@
       }
 
       input:focus {
-        border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+      }
+
+      /* Modern Belajar Mudah Toggle Switch */
+      .toggle-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 12px 14px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        transition:
+          border-color 0.15s ease,
+          background-color 0.15s ease;
+      }
+
+      .toggle-card:hover {
+        border-color: #cbd5e1;
+        background: #f1f5f9;
+      }
+
+      .toggle-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .toggle-label {
+        font-size: 0.86rem;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      .toggle-desc {
+        font-size: 0.75rem;
+        color: #64748b;
+      }
+
+      .compact-toggle {
+        padding: 8px 12px;
+        border-radius: 8px;
+      }
+
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+        flex-shrink: 0;
+      }
+
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        margin: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e1;
+        transition: all 0.25s ease;
+        border-radius: 9999px;
+      }
+
+      .slider::before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: #ffffff;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      }
+
+      .switch input:checked + .slider {
+        background-color: #4f46e5;
+      }
+
+      .switch input:focus-visible + .slider {
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+      }
+
+      .switch input:checked + .slider::before {
+        transform: translateX(20px);
       }
 
       section {
         display: grid;
-        gap: 12px;
+        gap: 14px;
       }
 
       .section-header {
         display: flex;
-        align-items: baseline;
+        align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        gap: 14px;
         flex-wrap: wrap;
+        padding-bottom: 2px;
       }
 
       .section-title {
         margin: 0;
-        font-size: 0.95rem;
-        font-weight: 600;
+        font-family: "Poppins", sans-serif;
+        font-size: 1.05rem;
+        font-weight: 700;
         color: #0f172a;
       }
 
@@ -249,40 +469,65 @@
 
       .services {
         display: grid;
-        gap: 14px;
+        gap: 16px;
       }
 
       .service-card {
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 18px;
+        border-radius: 12px;
+        padding: 20px;
         background: #ffffff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
       }
 
-      .service-card strong {
-        display: block;
-        margin-bottom: 12px;
-        font-size: 0.92rem;
-        font-weight: 600;
+      .service-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+
+      .service-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .service-card-title strong {
+        font-size: 0.95rem;
+        font-weight: 700;
         color: #0f172a;
+      }
+
+      .service-pill {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        background: #eef2ff;
+        color: #4f46e5;
+        border: 1px solid #c7d2fe;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
       }
 
       .service-subsection {
         border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 14px;
+        border-radius: 10px;
+        padding: 16px;
         background: #f8fafc;
       }
 
       .service-subsection + .service-subsection {
-        margin-top: 12px;
+        margin-top: 14px;
       }
 
       .subsection-title {
-        margin: 0 0 10px;
+        margin: 0 0 12px;
         font-size: 0.72rem;
-        font-weight: 600;
-        letter-spacing: 0.05em;
+        font-weight: 700;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
         color: #475569;
       }
@@ -293,10 +538,10 @@
         justify-content: space-between;
         gap: 16px;
         flex-wrap: wrap;
-        padding: 16px 20px;
+        padding: 18px 22px;
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
+        border-radius: 12px;
       }
 
       .button-row {
@@ -308,7 +553,7 @@
       button {
         appearance: none;
         border: 0;
-        border-radius: 6px;
+        border-radius: 8px;
         font: inherit;
         font-size: 0.88rem;
         font-weight: 600;
@@ -316,39 +561,54 @@
         transition:
           background-color 0.15s ease,
           border-color 0.15s ease,
+          transform 0.15s ease,
+          box-shadow 0.15s ease,
           opacity 0.15s ease;
       }
 
       #apply-services-button {
-        height: 38px;
-        padding: 0 16px;
-        background: #f1f5f9;
+        height: 40px;
+        padding: 0 18px;
+        background: #ffffff;
         color: #0f172a;
         border: 1px solid #cbd5e1;
         white-space: nowrap;
       }
 
       #apply-services-button:hover {
-        background: #e2e8f0;
+        background: #eef2ff;
+        border-color: #818cf8;
+        color: #4338ca;
       }
 
       #generate-button {
-        height: 42px;
-        padding: 0 22px;
-        background: #2563eb;
+        height: 44px;
+        padding: 0 24px;
+        background: #4f46e5;
         color: #ffffff;
         border: none;
         font-weight: 600;
-        font-size: 0.9rem;
+        font-size: 0.92rem;
+        box-shadow: 0 1px 2px rgba(79, 70, 229, 0.2);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
       }
 
       #generate-button:hover {
-        background: #1d4ed8;
+        background: #4338ca;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        transform: translateY(-1px);
+      }
+
+      #generate-button:active {
+        transform: translateY(0);
       }
 
       button[disabled] {
         cursor: wait;
-        opacity: 0.6;
+        opacity: 0.65;
+        transform: none !important;
       }
 
       .hint {
@@ -368,15 +628,16 @@
 
       .status {
         font-size: 0.88rem;
+        font-weight: 500;
         transition: all 0.2s ease;
       }
 
       .status:not(:empty) {
-        padding: 10px 14px;
-        border-radius: 6px;
-        background: #eff6ff;
-        border: 1px solid #bfdbfe;
-        color: #1e40af;
+        padding: 12px 16px;
+        border-radius: 8px;
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        color: #3730a3;
       }
 
       .status.error {
@@ -389,15 +650,277 @@
         display: none !important;
       }
 
+      /* Tree Preview Component matching Belajar Mudah */
+      .structure-preview-block {
+        padding: 22px 24px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+      }
+
+      .structure-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+
+      .structure-header-left {
+        flex: 1;
+        min-width: 240px;
+      }
+
+      .structure-header-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .structure-stats {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #4f46e5;
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        padding: 5px 12px;
+        border-radius: 9999px;
+        white-space: nowrap;
+      }
+
+      .copy-tree-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 32px;
+        padding: 0 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #334155;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+
+      .copy-tree-btn:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+        color: #0f172a;
+      }
+
+      .tree-window {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #1e293b;
+        background: #0f172a;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+      }
+
+      .tree-window-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        background: #1e293b;
+        border-bottom: 1px solid #334155;
+      }
+
+      .tree-window-dots {
+        display: flex;
+        gap: 6px;
+      }
+
+      .tree-window-dots .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+
+      .tree-window-dots .dot.red {
+        background: #f87171;
+      }
+
+      .tree-window-dots .dot.yellow {
+        background: #fbbf24;
+      }
+
+      .tree-window-dots .dot.green {
+        background: #34d399;
+      }
+
+      .tree-window-title {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #cbd5e1;
+      }
+
+      .tree-live-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #34d399;
+        background: rgba(52, 211, 153, 0.12);
+        border: 1px solid rgba(52, 211, 153, 0.25);
+        padding: 2px 8px;
+        border-radius: 9999px;
+      }
+
+      .pulse-indicator {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #34d399;
+        box-shadow: 0 0 6px #34d399;
+      }
+
+      .tree-window-body {
+        padding: 18px 20px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 0.84rem;
+        line-height: 1.65;
+        color: #cbd5e1;
+        max-height: 420px;
+        overflow-y: auto;
+        overflow-x: auto;
+      }
+
+      .tree-window-body::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+
+      .tree-window-body::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+
+      .tree-window-body::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 3px;
+      }
+
+      .tree-window-body::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+      }
+
+      .tree-line {
+        display: flex;
+        align-items: center;
+        white-space: pre;
+      }
+
+      .tree-guide {
+        color: #475569;
+        user-select: none;
+      }
+
+      .tree-icon {
+        margin-right: 6px;
+        user-select: none;
+      }
+
+      .tree-folder {
+        color: #818cf8;
+        font-weight: 600;
+      }
+
+      .tree-root-folder {
+        color: #38bdf8;
+        font-weight: 700;
+      }
+
+      .tree-file {
+        color: #cbd5e1;
+      }
+
+      .tree-badge {
+        font-size: 0.68rem;
+        font-weight: 600;
+        padding: 1px 7px;
+        border-radius: 4px;
+        margin-left: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        user-select: none;
+      }
+
+      .tree-badge.gateway {
+        background: rgba(99, 102, 241, 0.25);
+        color: #a5b4fc;
+        border: 1px solid rgba(165, 180, 252, 0.35);
+      }
+
+      .tree-badge.auth {
+        background: rgba(236, 72, 153, 0.25);
+        color: #f472b6;
+        border: 1px solid rgba(244, 114, 182, 0.35);
+      }
+
+      .tree-badge.service {
+        background: rgba(16, 185, 129, 0.25);
+        color: #6ee7b7;
+        border: 1px solid rgba(110, 231, 183, 0.35);
+      }
+
+      .tree-badge.template {
+        background: rgba(148, 163, 184, 0.15);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+      }
+
+      .tree-note {
+        color: #64748b;
+        font-size: 0.75rem;
+        margin-left: 8px;
+        user-select: none;
+      }
+
+      /* Belajar Mudah Footer */
+      .page-footer {
+        max-width: 900px;
+        margin: 40px auto 0;
+        padding: 24px 16px 0;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        font-size: 0.82rem;
+        color: #64748b;
+      }
+
+      .page-footer a {
+        color: #4f46e5;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .page-footer a:hover {
+        text-decoration: underline;
+      }
+
+      .footer-links {
+        display: flex;
+        gap: 14px;
+      }
+
       @media (max-width: 640px) {
-        body {
-          padding: 16px 12px;
+        .page-wrapper {
+          padding: 16px 12px 40px;
         }
 
         .hero,
         form {
-          padding-left: 18px;
-          padding-right: 18px;
+          padding-left: 20px;
+          padding-right: 20px;
         }
 
         .service-count-row {
@@ -408,6 +931,7 @@
         #apply-services-button,
         #generate-button {
           width: 100%;
+          justify-content: center;
         }
 
         .actions {
@@ -418,246 +942,406 @@
         .button-row {
           width: 100%;
         }
+
+        .page-footer {
+          flex-direction: column;
+          text-align: center;
+          align-items: center;
+        }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-f1jFytin.js"></script>
+    <script type="module" crossorigin src="/assets/index-ELU6nU5o.js"></script>
   </head>
   <body>
-    <main class="shell">
-      <section class="hero">
-        <div class="hero-top">
-          <div class="hero-badge">Go-Fiber Microservice Starter</div>
-          <div class="hero-credit">
-            By Katili Jiwo &bull;
-            <a
-              href="https://github.com/jiwomdf/go-fiber-microservice-generator"
-              target="_blank"
-              rel="noreferrer"
-              >GitHub</a
+    <!-- Top Navbar inspired by Belajar Mudah -->
+    <header class="top-navbar">
+      <div class="nav-container">
+        <a class="nav-brand" href="/">
+          <div class="nav-logo">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
+              <polygon points="12 2 2 7 12 12 22 7 12 2" />
+              <polyline points="2 17 12 22 22 17" />
+              <polyline points="2 12 12 17 22 12" />
+            </svg>
           </div>
-        </div>
+          <div class="nav-brand-text">
+            <span class="nav-title">Belajar Mudah</span>
+            <span class="nav-sub">Go-Fiber Microservice Generator</span>
+          </div>
+        </a>
 
-        <h3>Microservice Starter Generator</h3>
-
-        <p>
-          Generate a downloadable Go-Fiber microservice starter bundle
-          with predefined core services and configurable extra services. For
-          more details, visit the
+        <div class="nav-links">
           <a
             href="https://github.com/jiwomdf/go-fiber-microservice-generator"
             target="_blank"
             rel="noreferrer"
-            >GitHub repository</a
-          >.
-        </p>
-      </section>
-
-      <form id="generator-form">
-        <div class="intro-grid">
-          <div class="panel-block">
-            <span class="block-kicker">Project Setup</span>
-            <h2 class="block-title">Basic project information</h2>
-            <p class="block-desc">
-              Define the main project identity and entry port before generating
-              your starter bundle.
-            </p>
-
-            <div class="grid-with-apply">
-              <label>
-                Project Name
-                <span class="label-caption"
-                  >Used as your service workspace name</span
-                >
-                <input
-                  id="project-name"
-                  name="project-name"
-                  placeholder="some-platform"
-                />
-              </label>
-
-              <label>
-                Traefik Port
-                <span class="label-caption"
-                  >Public routing port for the gateway</span
-                >
-                <input
-                  id="traefik-port"
-                  name="traefik-port"
-                  placeholder="8000"
-                />
-              </label>
-            </div>
-          </div>
-
-          <div class="panel-block compact">
-            <span class="block-kicker">Scaffold Setup</span>
-            <h2 class="block-title">Extra service count</h2>
-            <p class="block-desc">
-              Set how many additional services you want, then apply to reveal
-              the service fields.
-            </p>
-
-            <div class="service-count-row">
-              <label>
-                Number Of New Services
-                <span class="label-caption"
-                  >Supported range: 0 to 20 services</span
-                >
-                <input
-                  id="service-count"
-                  name="service-count"
-                  type="number"
-                  min="0"
-                  max="20"
-                  value="0"
-                  placeholder="e.g. 3"
-                  required
-                />
-              </label>
-
-              <button id="apply-services-button" type="button">Apply</button>
-            </div>
-          </div>
+            class="nav-btn"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+              />
+            </svg>
+            <span>GitHub</span>
+          </a>
+          <a
+            href="https://www.belajarmudah.com"
+            target="_blank"
+            rel="noreferrer"
+            class="nav-btn nav-btn-primary"
+          >
+            <span>belajarmudah.com</span>
+          </a>
         </div>
+      </div>
+    </header>
 
-        <section id="base-service-section" class="hidden">
-          <div class="section-header">
-            <div>
-              <h2 class="section-title">Base Service Config</h2>
-              <div class="section-meta">
-                Predefined core auth service (optional)
-              </div>
+    <div class="page-wrapper">
+      <main class="shell">
+        <section class="hero">
+          <div class="hero-top">
+            <div class="hero-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="10" />
+              </svg>
+              Go-Fiber Microservice Starter
             </div>
-            <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: #0f172a;">
-              <input id="include-auth-service" type="checkbox" checked style="width: 16px; height: 16px; margin: 0; cursor: pointer;" />
-              Include auth-service
-            </label>
+            <div class="hero-credit">
+              By Katili Jiwo &bull;
+              <a
+                href="https://github.com/jiwomdf/go-fiber-microservice-generator"
+                target="_blank"
+                rel="noreferrer"
+                >GitHub Repository</a
+              >
+            </div>
           </div>
 
-          <div class="services" id="base-service-container">
-            <div class="service-card base-service-card">
-              <strong>auth-service</strong>
+          <h1>Microservice Starter Generator</h1>
 
-              <div class="service-subsection non-db-section">
-                <h3 class="subsection-title">Service Config</h3>
-                <div class="grid">
-                  <label>
-                    HTTP Port
-                    <span class="label-caption"
-                      >REST/HTTP application port</span
-                    >
-                    <input id="auth-http-port" placeholder="7704" />
-                  </label>
+          <p>
+            Generate a downloadable Go-Fiber microservice starter bundle with
+            Clean Architecture, gRPC, and PostgreSQL. Choose only the extra
+            services you need, or include Auth Service and Traefik Gateway with
+            one click.
+          </p>
+        </section>
 
-                  <label>
-                    gRPC Port
-                    <span class="label-caption"
-                      >Internal gRPC communication port</span
+        <form id="generator-form">
+          <div class="intro-grid">
+            <div class="panel-block">
+              <span class="block-kicker">Project Setup</span>
+              <h2 class="block-title">Basic project information</h2>
+              <p class="block-desc">
+                Define the service workspace identity and optional gateway
+                routing.
+              </p>
+
+              <div class="grid">
+                <label>
+                  Project Name
+                  <span class="label-caption"
+                    >Used as your service workspace name</span
+                  >
+                  <input
+                    id="project-name"
+                    name="project-name"
+                    placeholder="some-platform"
+                  />
+                </label>
+
+                <div class="toggle-card">
+                  <div class="toggle-info">
+                    <span class="toggle-label">Include Traefik Gateway</span>
+                    <span class="toggle-desc"
+                      >Central reverse proxy & API gateway</span
                     >
-                    <input id="auth-grpc-port" placeholder="57704" />
+                  </div>
+                  <label
+                    class="switch"
+                    for="include-traefik"
+                    aria-label="Toggle Traefik Gateway"
+                  >
+                    <input id="include-traefik" type="checkbox" checked />
+                    <span class="slider"></span>
                   </label>
                 </div>
               </div>
 
-              <div class="service-subsection db-section">
-                <h3 class="subsection-title">Database Config</h3>
-                <div class="grid">
-                  <label>
-                    DB Host
-                    <span class="label-caption">Database server hostname</span>
-                    <input id="auth-db-host" placeholder="localhost" />
-                  </label>
+              <div id="traefik-port-container" style="margin-top: 14px">
+                <label>
+                  Traefik Port
+                  <span class="label-caption"
+                    >Public entry port for the gateway</span
+                  >
+                  <input
+                    id="traefik-port"
+                    name="traefik-port"
+                    placeholder="8000"
+                  />
+                </label>
+              </div>
+            </div>
 
-                  <label>
-                    DB Port
-                    <span class="label-caption">Default PostgreSQL port</span>
-                    <input id="auth-db-port" placeholder="5432" />
-                  </label>
+            <div class="panel-block compact">
+              <span class="block-kicker">Scaffold Setup</span>
+              <h2 class="block-title">Extra service count</h2>
+              <p class="block-desc">
+                Set how many new microservices you want, then apply to reveal
+                the service fields.
+              </p>
 
-                  <label>
-                    DB Name
-                    <span class="label-caption">Target database name</span>
-                    <input
-                      id="auth-db-name"
-                      placeholder="somedatabase"
-                    />
-                  </label>
+              <div class="service-count-row">
+                <label>
+                  Number Of New Services
+                  <span class="label-caption"
+                    >Supported range: 0 to 20 services</span
+                  >
+                  <input
+                    id="service-count"
+                    name="service-count"
+                    type="number"
+                    min="0"
+                    max="20"
+                    value="0"
+                    placeholder="e.g. 3"
+                    required
+                  />
+                </label>
 
-                  <label>
-                    DB Username
-                    <span class="label-caption">Database user credential</span>
-                    <input id="auth-db-user" placeholder="postgres" />
-                  </label>
+                <button id="apply-services-button" type="button">Apply</button>
+              </div>
+            </div>
+          </div>
 
-                  <label>
-                    DB Password
-                    <span class="label-caption"
-                      >Optional if filled later manually</span
-                    >
-                    <input id="auth-db-password" placeholder="your-password" />
-                  </label>
+          <section id="base-service-section" class="hidden">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Auth Service</h2>
+                <div class="section-meta">
+                  Core authentication and authorization service (optional)
+                </div>
+              </div>
+              <div class="toggle-card compact-toggle">
+                <div class="toggle-info">
+                  <span class="toggle-label">Include Auth Service</span>
+                </div>
+                <label
+                  class="switch"
+                  for="include-auth-service"
+                  aria-label="Toggle Auth Service"
+                >
+                  <input id="include-auth-service" type="checkbox" />
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div
+              class="services"
+              id="base-service-container"
+              style="display: none"
+            >
+              <div class="service-card base-service-card">
+                <div class="service-card-header">
+                  <div class="service-card-title">
+                    <span class="service-pill">Core</span>
+                    <strong>auth-service</strong>
+                  </div>
+                </div>
+
+                <div class="service-subsection non-db-section">
+                  <h3 class="subsection-title">Service Config</h3>
+                  <div class="grid">
+                    <label>
+                      HTTP Port
+                      <span class="label-caption"
+                        >REST/HTTP application port</span
+                      >
+                      <input id="auth-http-port" placeholder="7704" />
+                    </label>
+
+                    <label>
+                      gRPC Port
+                      <span class="label-caption"
+                        >Internal gRPC communication port</span
+                      >
+                      <input id="auth-grpc-port" placeholder="57704" />
+                    </label>
+                  </div>
+                </div>
+
+                <div class="service-subsection db-section">
+                  <h3 class="subsection-title">Database Config</h3>
+                  <div class="grid">
+                    <label>
+                      DB Host
+                      <span class="label-caption"
+                        >Database server hostname</span
+                      >
+                      <input id="auth-db-host" placeholder="localhost" />
+                    </label>
+
+                    <label>
+                      DB Port
+                      <span class="label-caption">Default PostgreSQL port</span>
+                      <input id="auth-db-port" placeholder="5432" />
+                    </label>
+
+                    <label>
+                      DB Name
+                      <span class="label-caption">Target database name</span>
+                      <input id="auth-db-name" placeholder="somedatabase" />
+                    </label>
+
+                    <label>
+                      DB Username
+                      <span class="label-caption"
+                        >Database user credential</span
+                      >
+                      <input id="auth-db-user" placeholder="postgres" />
+                    </label>
+
+                    <label>
+                      DB Password
+                      <span class="label-caption"
+                        >Optional if filled later manually</span
+                      >
+                      <input id="auth-db-password" placeholder="your-password" />
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section id="extra-services-section" class="hidden">
-          <div class="section-header">
-            <div>
-              <h2 class="section-title">Extra Services</h2>
-              <div class="section-meta">
-                Dynamically generated after clicking Apply
+          <section id="extra-services-section" class="hidden">
+            <div class="section-header">
+              <div>
+                <h2 class="section-title">Extra Services</h2>
+                <div class="section-meta">
+                  Dynamically generated microservices configured below
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="services" id="services"></div>
-        </section>
+            <div class="services" id="services"></div>
+          </section>
 
-        <div id="ready-to-generate-card" class="actions hidden">
-          <div>
-            <div class="section-title" style="margin-bottom: 6px">
-              Ready to generate
+          <section id="structure-preview-section" class="panel-block structure-preview-block">
+            <div class="structure-header">
+              <div class="structure-header-left">
+                <span class="block-kicker">Bundle Blueprint</span>
+                <h2 class="block-title">Project Structure Preview</h2>
+                <p class="block-desc">
+                  Live preview of files and microservices generated in your bundle.
+                </p>
+              </div>
+              <div class="structure-header-right">
+                <span class="structure-stats" id="structure-stats-badge">Loading...</span>
+                <button type="button" id="copy-tree-button" class="copy-tree-btn" title="Copy ASCII tree to clipboard">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  <span id="copy-tree-text">Copy Tree</span>
+                </button>
+              </div>
             </div>
-            <span class="hint">
-              Service names are slugified automatically. Reserved names:
-              <code>auth</code>.
-            </span>
+
+            <div class="tree-window">
+              <div class="tree-window-bar">
+                <div class="tree-window-dots">
+                  <span class="dot red"></span>
+                  <span class="dot yellow"></span>
+                  <span class="dot green"></span>
+                </div>
+                <span class="tree-window-title" id="tree-root-label">some-platform/</span>
+                <div class="tree-window-action">
+                  <span class="tree-live-pill">
+                    <span class="pulse-indicator"></span>
+                    Live Preview
+                  </span>
+                </div>
+              </div>
+              <div class="tree-window-body" id="project-tree-container"></div>
+            </div>
+          </section>
+
+          <div id="ready-to-generate-card" class="actions hidden">
+            <div>
+              <div class="section-title" style="margin-bottom: 4px">
+                Ready to generate
+              </div>
+              <span class="hint">
+                Service names are slugified automatically. Reserved names:
+                <code>auth</code>.
+              </span>
+            </div>
+
+            <div class="button-row">
+              <button id="generate-button" type="submit">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Generate Project Zip
+              </button>
+            </div>
           </div>
 
-          <div class="button-row">
-            <button id="generate-button" type="submit">
-              Generate Project Zip
-            </button>
-          </div>
+          <div class="status" id="status"></div>
+        </form>
+
+      </main>
+
+      <footer class="page-footer">
+        <div>
+          &copy; 2026 PT Karya Belajar Mudah &bull; Crafted by
+          <a
+            href="https://github.com/jiwomdf"
+            target="_blank"
+            rel="noreferrer"
+            >Katili Jiwo</a
+          >
         </div>
-
-        <div class="status" id="status"></div>
-      </form>
-
-
-      <script>
-        const applyBtn = document.getElementById("apply-services-button");
-        const baseServiceSection = document.getElementById(
-          "base-service-section",
-        );
-        const extraServicesSection = document.getElementById(
-          "extra-services-section",
-        );
-        const readyToGenerateCard = document.getElementById(
-          "ready-to-generate-card",
-        );
-
-        function showConfigSections() {
-          baseServiceSection.classList.remove("hidden");
-          extraServicesSection.classList.remove("hidden");
-          readyToGenerateCard.classList.remove("hidden");
-        }
-
-        applyBtn.addEventListener("click", showConfigSections);
-      </script>
-    </main>
+        <div class="footer-links">
+          <a
+            href="https://github.com/jiwomdf/go-fiber-microservice-generator"
+            target="_blank"
+            rel="noreferrer"
+            >GitHub Repository</a
+          >
+          &bull;
+          <a
+            href="https://www.belajarmudah.com"
+            target="_blank"
+            rel="noreferrer"
+            >Belajar Mudah</a
+          >
+        </div>
+      </footer>
+    </div>
   </body>
 </html>
