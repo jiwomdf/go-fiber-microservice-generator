@@ -1134,7 +1134,7 @@ async function generateProject(event: SubmitEvent): Promise<void> {
         document.getElementById(
           "include-traefik",
         ) as HTMLInputElement | null
-      )?.checked ?? true;
+      )?.checked ?? false;
 
     const request = normalizeRequest(
       readValue("project-name"),
@@ -1227,7 +1227,7 @@ function getTreeData(): {
 
   const includeTraefik =
     (document.getElementById("include-traefik") as HTMLInputElement | null)
-      ?.checked ?? true;
+      ?.checked ?? false;
   const traefikPort = readValue("traefik-port") || "8000";
 
   const includeAuth =
