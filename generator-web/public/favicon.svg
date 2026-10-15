@@ -1,30 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
-    <linearGradient id="astroid-glow" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8" />
-      <stop offset="50%" stop-color="#818cf8" />
-      <stop offset="100%" stop-color="#4f46e5" />
-    </linearGradient>
-    <linearGradient id="astroid-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="nav-badge-bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#0f172a" />
       <stop offset="100%" stop-color="#1e1b4b" />
     </linearGradient>
   </defs>
 
-  <!-- Squircle Base -->
-  <rect width="64" height="64" rx="16" fill="url(#astroid-bg)" stroke="#4f46e5" stroke-width="1.5" stroke-opacity="0.5" />
+  <!-- 100% identical squircle frame as .nav-logo-badge -->
+  <rect width="64" height="64" rx="16" fill="url(#nav-badge-bg)" stroke="#4f46e5" stroke-width="1.5" stroke-opacity="0.4" />
 
-  <!-- Lucide Astroid (24x24 scaled to 44x44 centered at (10, 10)) -->
-  <g transform="translate(10, 10) scale(1.833)">
+  <!-- Lucide Astroid - exact same 24x24 path, stroke #38bdf8, no extra dot or fill -->
+  <g transform="translate(14, 14) scale(1.5)">
     <path
       d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203"
-      stroke="url(#astroid-glow)"
-      stroke-width="2.2"
+      stroke="#38bdf8"
+      stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
-      fill="rgba(56, 189, 248, 0.12)"
+      fill="none"
     />
-    <!-- Center Fiber Sparkle Node -->
-    <circle cx="12" cy="12" r="1.5" fill="#38bdf8" />
   </g>
 </svg>

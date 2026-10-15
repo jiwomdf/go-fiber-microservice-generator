@@ -1567,3 +1567,32 @@ formEl.addEventListener("submit", (event) => {
 });
 servicesEl.innerHTML = "";
 renderProjectTree();
+
+// Theme toggle
+const themeToggleBtn = document.getElementById("theme-toggle-btn");
+const themeIconSun = document.getElementById("theme-icon-sun");
+const themeIconMoon = document.getElementById("theme-icon-moon");
+
+function updateThemeUI(isDark: boolean): void {
+  if (isDark) {
+    document.documentElement.classList.add("dark");
+    themeIconSun?.classList.remove("hidden");
+    themeIconMoon?.classList.add("hidden");
+  } else {
+    document.documentElement.classList.remove("dark");
+    themeIconSun?.classList.add("hidden");
+    themeIconMoon?.classList.remove("hidden");
+  }
+}
+
+const savedTheme = localStorage.getItem("theme");
+const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+const isInitialDark = savedTheme === "dark" || (!savedTheme && prefersDark);
+updateThemeUI(isInitialDark);
+
+themeToggleBtn?.addEventListener("click", () => {
+  const isDark = document.documentElement.classList.contains("dark");
+  const nextTheme = isDark ? "light" : "dark";
+  localStorage.setItem("theme", nextTheme);
+  updateThemeUI(!isDark);
+});

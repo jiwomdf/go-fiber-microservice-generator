@@ -8,9 +8,20 @@
   <meta name="description"
     content="Scaffold a production-ready Go-Fiber microservice starter bundle with Clean Architecture, gRPC, PostgreSQL, and optional Traefik routing." />
 
-  <link rel="icon" type="image/png" href="/favicon.png" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="apple-touch-icon" href="/icon.png" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" />
+  <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png?v=3" />
+  <link rel="shortcut icon" href="/favicon.ico?v=3" />
+  <link rel="apple-touch-icon" href="/icon.png?v=3" />
+
+  <script>
+    (function () {
+      var saved = localStorage.getItem('theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -65,8 +76,9 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      text-decoration: none;
       color: inherit;
+      user-select: none;
+      cursor: default;
     }
 
     .nav-logo-badge {
@@ -143,6 +155,27 @@
     }
 
     .nav-btn:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+      color: #0f172a;
+    }
+
+    .theme-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      color: #334155;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      padding: 0;
+    }
+
+    .theme-toggle-btn:hover {
       background: #f1f5f9;
       border-color: #94a3b8;
       color: #0f172a;
@@ -942,15 +975,201 @@
         align-items: center;
       }
     }
+
+    /* ==========================================================================
+       Dark Theme Styles
+       ========================================================================== */
+    html.dark body {
+      background-color: #0b0f19;
+      color: #f1f5f9;
+    }
+
+    html.dark .top-navbar {
+      background: #111827;
+      border-bottom-color: #1f2937;
+    }
+
+    html.dark .nav-brand {
+      color: #f8fafc;
+    }
+
+    html.dark .nav-sub {
+      color: #94a3b8;
+    }
+
+    html.dark .nav-btn,
+    html.dark .theme-toggle-btn {
+      background: #1f2937;
+      border-color: #374151;
+      color: #e2e8f0;
+    }
+
+    html.dark .nav-btn:hover,
+    html.dark .theme-toggle-btn:hover {
+      background: #374151;
+      border-color: #4b5563;
+      color: #ffffff;
+    }
+
+    html.dark .hero-banner {
+      background: #111827;
+      border-color: #1f2937;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    html.dark .hero-banner h1 {
+      color: #f8fafc;
+    }
+
+    html.dark .hero-banner p {
+      color: #94a3b8;
+    }
+
+    html.dark .panel-block {
+      background: #111827;
+      border-color: #1f2937;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    html.dark .block-kicker {
+      color: #818cf8;
+    }
+
+    html.dark .block-title {
+      color: #f8fafc;
+    }
+
+    html.dark .block-desc {
+      color: #94a3b8;
+    }
+
+    html.dark label {
+      color: #cbd5e1;
+    }
+
+    html.dark .label-caption {
+      color: #94a3b8;
+    }
+
+    html.dark input {
+      background: #0f172a;
+      border-color: #374151;
+      color: #f8fafc;
+    }
+
+    html.dark input::placeholder {
+      color: #64748b;
+    }
+
+    html.dark input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    }
+
+    html.dark .toggle-card {
+      background: #0f172a;
+      border-color: #1f2937;
+    }
+
+    html.dark .toggle-label {
+      color: #f8fafc;
+    }
+
+    html.dark .toggle-desc {
+      color: #94a3b8;
+    }
+
+    html.dark .slider {
+      background-color: #374151;
+    }
+
+    html.dark .section-title {
+      color: #f8fafc;
+    }
+
+    html.dark .section-meta {
+      color: #94a3b8;
+    }
+
+    html.dark .service-card {
+      background: #111827;
+      border-color: #1f2937;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    html.dark .service-card-header {
+      border-bottom-color: #1f2937;
+    }
+
+    html.dark .service-card-title strong {
+      color: #f8fafc;
+    }
+
+    html.dark .service-subsection {
+      background: #0f172a;
+      border-color: #1f2937;
+    }
+
+    html.dark .subsection-title {
+      color: #cbd5e1;
+      border-bottom-color: #1f2937;
+    }
+
+    html.dark .actions {
+      background: #111827;
+      border-color: #1f2937;
+    }
+
+    html.dark .actions .hint {
+      color: #94a3b8;
+    }
+
+    html.dark .actions .hint code {
+      background: #0f172a;
+      border-color: #374151;
+      color: #cbd5e1;
+    }
+
+    html.dark .structure-preview-block {
+      background: #111827;
+      border-color: #1f2937;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    html.dark .structure-stats {
+      color: #a5b4fc;
+      background: rgba(79, 70, 229, 0.2);
+      border-color: rgba(165, 180, 252, 0.3);
+    }
+
+    html.dark .copy-tree-btn {
+      background: #1f2937;
+      border-color: #374151;
+      color: #e2e8f0;
+    }
+
+    html.dark .copy-tree-btn:hover {
+      background: #374151;
+      color: #ffffff;
+    }
+
+    html.dark .page-footer {
+      border-top-color: #1f2937;
+      color: #94a3b8;
+    }
+
+    html.dark .page-footer a {
+      color: #818cf8;
+    }
   </style>
-  <script type="module" crossorigin src="/assets/index-Cj4dDXhG.js"></script>
+  <script type="module" crossorigin src="/assets/index-Bw4dTWPW.js"></script>
 </head>
 
 <body>
   <!-- Top Navbar -->
   <header class="top-navbar">
     <div class="nav-container">
-      <a class="nav-brand" href="/">
+      <div class="nav-brand">
         <div class="nav-logo-badge" title="Go-Fiber Microservice Generator">
           <svg class="nav-astroid-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12.983 21.186a1 1 0 0 1-1.966 0 10 10 0 0 0-8.203-8.203 1 1 0 0 1 0-1.966 10 10 0 0 0 8.203-8.203 1 1 0 0 1 1.966 0 10 10 0 0 0 8.203 8.203 1 1 0 0 1 0 1.966 10 10 0 0 0-8.203 8.203" />
@@ -960,9 +1179,26 @@
           <span class="nav-title">Go-Fiber Generator</span>
           <span class="nav-sub">Clean Architecture &bull; Fiber v2 &bull; gRPC</span>
         </div>
-      </a>
+      </div>
 
       <div class="nav-links">
+        <button type="button" id="theme-toggle-btn" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <svg id="theme-icon-sun" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2" />
+            <path d="M12 20v2" />
+            <path d="m4.93 4.93 1.41 1.41" />
+            <path d="m17.66 17.66 1.41 1.41" />
+            <path d="M2 12h2" />
+            <path d="M20 12h2" />
+            <path d="m6.34 17.66-1.41 1.41" />
+            <path d="m19.07 4.93-1.41 1.41" />
+          </svg>
+          <svg id="theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+          </svg>
+        </button>
+
         <a href="https://github.com/jiwomdf/go-fiber-microservice-generator" target="_blank" rel="noreferrer"
           class="nav-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
