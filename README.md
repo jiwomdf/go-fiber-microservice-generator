@@ -5,6 +5,8 @@ Build Go Microservices Effortlessly with a `Fiber` & `Traefik` Code Generator
 Live Generator app:
 **https://jiwomdf.github.io/go-fiber-microservice-generator/**
 
+![Go-Fiber Microservice Generator Preview](assets/generator-preview.png)
+
 ## What It Includes
 
 - Generated microservices, including an `auth-service`
