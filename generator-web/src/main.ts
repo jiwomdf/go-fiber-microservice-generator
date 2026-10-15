@@ -26,6 +26,7 @@ type ServiceSpec = {
 type GenerationRequest = {
   projectName: string;
   traefikPort: number;
+  includeAuth: boolean;
   authHttpPort: number;
   authGrpcPort: number;
   authDb: DatabaseConfig;
@@ -104,19 +105,19 @@ function renderServiceInputs(): void {
         <div class="grid">
           <label>
             DB Host
-            <input name="db-host" placeholder="localhost" required>
+            <input name="db-host" placeholder="localhost">
           </label>
           <label>
             DB Port
-            <input name="db-port" placeholder="5432" required>
+            <input name="db-port" placeholder="5432">
           </label>
           <label>
             DB Name
-            <input name="db-name" placeholder="somedatabase" required>
+            <input name="db-name" placeholder="somedatabase">
           </label>
           <label>
             DB Username
-            <input name="db-user" placeholder="postgres" required>
+            <input name="db-user" placeholder="postgres">
           </label>
           <label>
             DB Password
@@ -199,29 +200,21 @@ function readServiceInputs(): ServiceInput[] {
     .filter((service) => service.name);
 }
 
-function normalizeDbConfig(label: string, db: DatabaseConfig): DatabaseConfig {
+function normalizeDbConfig(
+  label: string,
+  db: DatabaseConfig,
+  defaultDatabaseName = "somedatabase",
+): DatabaseConfig {
   const normalized = {
-    host: db.host.trim(),
-    port: db.port.trim(),
-    database: db.database.trim(),
-    username: db.username.trim(),
+    host: db.host.trim() || "localhost",
+    port: db.port.trim() || "5432",
+    database: db.database.trim() || defaultDatabaseName,
+    username: db.username.trim() || "postgres",
     password: db.password,
   };
 
-  if (!normalized.host) {
-    throw new Error(`${label} database host is required`);
-  }
-  if (!normalized.port) {
-    throw new Error(`${label} database port is required`);
-  }
   if (!/^\d+$/.test(normalized.port)) {
     throw new Error(`${label} database port must be numeric`);
-  }
-  if (!normalized.database) {
-    throw new Error(`${label} database name is required`);
-  }
-  if (!normalized.username) {
-    throw new Error(`${label} database username is required`);
   }
 
   return normalized;
@@ -250,6 +243,7 @@ function nextUnusedPort(start: number, used: Set<number>): number {
 function normalizeRequest(
   projectNameRaw: string,
   traefikPortRaw: string,
+  includeAuth: boolean,
   authHttpPortRaw: string,
   authGrpcPortRaw: string,
   authDbRaw: DatabaseConfig,
@@ -264,20 +258,39 @@ function normalizeRequest(
   if (servicesRaw.length > 20) {
     throw new Error("Too many services requested.");
   }
+  if (!includeAuth && servicesRaw.length === 0) {
+    throw new Error(
+      "Please add at least one extra service or include auth-service.",
+    );
+  }
 
-  const authDb = normalizeDbConfig("auth-service", authDbRaw);
+  const authDb = includeAuth
+    ? normalizeDbConfig("auth-service", authDbRaw, "somedatabase")
+    : {
+        host: "localhost",
+        port: "5432",
+        database: "somedatabase",
+        username: "postgres",
+        password: "",
+      };
   const traefikPort = parsePort(traefikPortRaw, "Traefik port") || 8000;
   const authHttpPort =
     parsePort(authHttpPortRaw, "auth-service http port") || 7704;
   const authGrpcPort =
     parsePort(authGrpcPortRaw, "auth-service grpc port") || 57704;
 
-  if (traefikPort === authHttpPort) {
+  if (includeAuth && traefikPort === authHttpPort) {
     throw new Error(`Traefik port already in use: ${traefikPort}`);
   }
 
-  const usedHttp = new Set<number>([7704, 7705, authHttpPort, traefikPort]);
-  const usedGrpc = new Set<number>([57704, 57705, authGrpcPort]);
+  const usedHttp = new Set<number>([7705, traefikPort]);
+  const usedGrpc = new Set<number>([57705]);
+  if (includeAuth) {
+    usedHttp.add(7704);
+    usedHttp.add(authHttpPort);
+    usedGrpc.add(57704);
+    usedGrpc.add(authGrpcPort);
+  }
   let nextHttp = 7704;
   let nextGrpc = 57704;
 
@@ -286,13 +299,17 @@ function normalizeRequest(
     if (!serviceName) {
       throw new Error("Service names must contain letters or numbers.");
     }
-    if (serviceName === "auth") {
+    if (includeAuth && serviceName === "auth") {
       throw new Error(
         '"auth" is reserved because the base project already contains auth-service.',
       );
     }
 
-    const db = normalizeDbConfig(`${serviceName}-service`, raw.db);
+    const db = normalizeDbConfig(
+      `${serviceName}-service`,
+      raw.db,
+      `${serviceName}db`,
+    );
     let httpPort = parsePort(raw.httpPort, `${serviceName} http port`);
     if (httpPort === 0) {
       nextHttp = nextUnusedPort(nextHttp + 1, usedHttp);
@@ -324,6 +341,7 @@ function normalizeRequest(
   return {
     projectName,
     traefikPort,
+    includeAuth,
     authHttpPort,
     authGrpcPort,
     authDb,
@@ -754,8 +772,10 @@ function appendTraefikRoute(
   entity: string,
   serviceName: string,
   httpPort: number,
+  includeAuth = true,
 ): void {
   let routes = getFile(files, "traefik/dynamic/routes.yml");
+  const commonMiddleware = includeAuth ? "protected-common" : "public-common";
   const routerBlock = `
     ${entity}-api:
       entryPoints:
@@ -764,7 +784,7 @@ function appendTraefikRoute(
       middlewares:
         - ${entity}-strip-v1
         - ${entity}-addprefix
-        - protected-common
+        - ${commonMiddleware}
       service: ${serviceName}
 `;
   const serviceBlock = `
@@ -792,7 +812,11 @@ function appendTraefikRoute(
   setFile(files, "traefik/dynamic/routes.yml", routes);
 }
 
-function scaffoldService(files: Map<string, string>, spec: ServiceSpec): void {
+function scaffoldService(
+  files: Map<string, string>,
+  spec: ServiceSpec,
+  includeAuth = true,
+): void {
   const entity = spec.name;
   const serviceName = `${entity}-service`;
   const entityPascal = pascalCase(entity);
@@ -911,7 +935,7 @@ function scaffoldService(files: Map<string, string>, spec: ServiceSpec): void {
   }
 
   appendComposeService(files, serviceName, spec.httpPort, spec.db);
-  appendTraefikRoute(files, entity, serviceName, spec.httpPort);
+  appendTraefikRoute(files, entity, serviceName, spec.httpPort, includeAuth);
   updateServiceConfig(
     files,
     serviceName,
@@ -919,6 +943,40 @@ function scaffoldService(files: Map<string, string>, spec: ServiceSpec): void {
     spec.grpcPort,
     spec.db,
   );
+}
+
+function removeGeneratedAuthService(files: Map<string, string>): void {
+  for (const path of Array.from(files.keys())) {
+    if (path.startsWith("auth-service/")) {
+      files.delete(path);
+    }
+  }
+
+  let compose = getFile(files, "docker-compose.yml");
+  compose = removeServiceBlock(compose, "auth-service");
+  compose = compose.replace(/\n\s+- auth-service/g, "");
+  compose = compose.replace(/\n\s+depends_on:\s*\n(?=\s+[a-z])/g, "\n");
+  setFile(files, "docker-compose.yml", compose);
+
+  let routes = getFile(files, "traefik/dynamic/routes.yml");
+  routes = routes.replace(
+    "\n    auth-login:\n      entryPoints:\n        - web\n      rule: Path(`/api/v1/login`)\n      middlewares:\n        - auth-strip-v1\n        - auth-addprefix\n        - public-common\n      service: auth-service\n",
+    "",
+  );
+  routes = routes.replace(
+    "\n    auth-api:\n      entryPoints:\n        - web\n      rule: PathPrefix(`/api/v1/auth`)\n      middlewares:\n        - auth-strip-v1\n        - auth-addprefix\n        - public-common\n      service: auth-service\n",
+    "",
+  );
+  routes = routes.replace(
+    "\n    auth-service:\n      loadBalancer:\n        servers:\n          - url: http://auth-service:7704\n",
+    "",
+  );
+  routes = routes.replace(
+    "\n    auth-strip-v1:\n      stripPrefix:\n        prefixes:\n          - /api/v1\n\n    auth-addprefix:\n      addPrefix:\n        prefix: /api/auth-service/v1\n",
+    "",
+  );
+  routes = routes.replace("  services:\n  middlewares:", "  services:\n\n  middlewares:\n");
+  setFile(files, "traefik/dynamic/routes.yml", routes);
 }
 
 async function buildProjectZip(
@@ -931,19 +989,25 @@ async function buildProjectZip(
   prepareServiceTemplate(files);
   removeGeneratedUserService(files);
   removeGeneratorWeb(files);
-  updateServiceConfig(
-    files,
-    "auth-service",
-    request.authHttpPort,
-    request.authGrpcPort,
-    request.authDb,
-  );
-  updateTraefikBasePorts(files, request.authHttpPort);
+
+  if (request.includeAuth) {
+    updateServiceConfig(
+      files,
+      "auth-service",
+      request.authHttpPort,
+      request.authGrpcPort,
+      request.authDb,
+    );
+    updateTraefikBasePorts(files, request.authHttpPort);
+  } else {
+    removeGeneratedAuthService(files);
+  }
+
   updateTraefikPort(files, request.traefikPort);
 
   for (const service of request.services) {
     updateStatus(`Scaffolding ${service.name}-service...`);
-    scaffoldService(files, service);
+    scaffoldService(files, service, request.includeAuth);
   }
 
   updateStatus("Building zip archive...");
@@ -981,9 +1045,17 @@ async function generateProject(event: SubmitEvent): Promise<void> {
   buttonEl.disabled = true;
 
   try {
+    const includeAuth =
+      (
+        document.getElementById(
+          "include-auth-service",
+        ) as HTMLInputElement | null
+      )?.checked ?? true;
+
     const request = normalizeRequest(
       readValue("project-name"),
       readValue("traefik-port"),
+      includeAuth,
       readValue("auth-http-port"),
       readValue("auth-grpc-port"),
       readDatabase("auth"),
@@ -1002,6 +1074,21 @@ async function generateProject(event: SubmitEvent): Promise<void> {
     buttonEl.disabled = false;
   }
 }
+
+const includeAuthCheckbox = document.getElementById(
+  "include-auth-service",
+) as HTMLInputElement | null;
+const baseServiceContainer = document.getElementById(
+  "base-service-container",
+) as HTMLDivElement | null;
+
+includeAuthCheckbox?.addEventListener("change", () => {
+  if (baseServiceContainer) {
+    baseServiceContainer.style.display = includeAuthCheckbox.checked
+      ? ""
+      : "none";
+  }
+});
 
 applyServicesButtonEl.addEventListener("click", applyServiceInputs);
 formEl.addEventListener("submit", (event) => {

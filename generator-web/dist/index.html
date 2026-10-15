@@ -420,7 +420,7 @@
         }
       }
     </style>
-    <script type="module" crossorigin src="/assets/index-Dc03suWs.js"></script>
+    <script type="module" crossorigin src="/assets/index-f1jFytin.js"></script>
   </head>
   <body>
     <main class="shell">
@@ -526,12 +526,16 @@
             <div>
               <h2 class="section-title">Base Service Config</h2>
               <div class="section-meta">
-                Predefined core service configuration
+                Predefined core auth service (optional)
               </div>
             </div>
+            <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: #0f172a;">
+              <input id="include-auth-service" type="checkbox" checked style="width: 16px; height: 16px; margin: 0; cursor: pointer;" />
+              Include auth-service
+            </label>
           </div>
 
-          <div class="services">
+          <div class="services" id="base-service-container">
             <div class="service-card base-service-card">
               <strong>auth-service</strong>
 
@@ -543,7 +547,7 @@
                     <span class="label-caption"
                       >REST/HTTP application port</span
                     >
-                    <input id="auth-http-port" placeholder="7704" required />
+                    <input id="auth-http-port" placeholder="7704" />
                   </label>
 
                   <label>
@@ -551,7 +555,7 @@
                     <span class="label-caption"
                       >Internal gRPC communication port</span
                     >
-                    <input id="auth-grpc-port" placeholder="57704" required />
+                    <input id="auth-grpc-port" placeholder="57704" />
                   </label>
                 </div>
               </div>
@@ -562,13 +566,13 @@
                   <label>
                     DB Host
                     <span class="label-caption">Database server hostname</span>
-                    <input id="auth-db-host" placeholder="localhost" required />
+                    <input id="auth-db-host" placeholder="localhost" />
                   </label>
 
                   <label>
                     DB Port
                     <span class="label-caption">Default PostgreSQL port</span>
-                    <input id="auth-db-port" placeholder="5432" required />
+                    <input id="auth-db-port" placeholder="5432" />
                   </label>
 
                   <label>
@@ -577,14 +581,13 @@
                     <input
                       id="auth-db-name"
                       placeholder="somedatabase"
-                      required
                     />
                   </label>
 
                   <label>
                     DB Username
                     <span class="label-caption">Database user credential</span>
-                    <input id="auth-db-user" placeholder="postgres" required />
+                    <input id="auth-db-user" placeholder="postgres" />
                   </label>
 
                   <label>
