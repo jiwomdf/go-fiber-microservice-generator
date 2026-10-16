@@ -2,6 +2,7 @@ import JSZip from "jszip";
 import { TEMPLATE_FILE_PATHS } from "./templateManifest";
 
 type DatabaseConfig = {
+  type?: string;
   host: string;
   port: string;
   database: string;
@@ -113,6 +114,17 @@ function renderServiceInputs(): void {
         <h4 class="subsection-title">Database Config</h4>
         <div class="grid">
           <label>
+            Database
+            <span class="label-caption">Select database engine</span>
+            <select name="db-type">
+              <option value="postgres" selected>PostgreSQL</option>
+              <option value="mysql" disabled>MySQL (Coming Soon)</option>
+              <option value="mongodb" disabled>MongoDB (Coming Soon)</option>
+              <option value="sqlite" disabled>SQLite (Coming Soon)</option>
+              <option value="mariadb" disabled>MariaDB (Coming Soon)</option>
+            </select>
+          </label>
+          <label>
             DB Host
             <span class="label-caption">Database host</span>
             <input name="db-host" placeholder="localhost">
@@ -140,8 +152,9 @@ function renderServiceInputs(): void {
         </div>
       </div>
     `;
-    card.querySelectorAll("input").forEach((inp) => {
+    card.querySelectorAll("input, select").forEach((inp) => {
       inp.addEventListener("input", renderProjectTree);
+      inp.addEventListener("change", renderProjectTree);
     });
     servicesEl.appendChild(card);
   }
@@ -181,7 +194,11 @@ function readValue(id: string): string {
 }
 
 function readDatabase(prefix: string): DatabaseConfig {
+  const typeEl = document.getElementById(
+    `${prefix}-db-type`,
+  ) as HTMLSelectElement | null;
   return {
+    type: typeEl?.value || "postgres",
     host: readValue(`${prefix}-db-host`),
     port: readValue(`${prefix}-db-port`),
     database: readValue(`${prefix}-db-name`),
@@ -206,6 +223,10 @@ function readServiceInputs(): ServiceInput[] {
         card.querySelector('input[name="grpc-port"]') as HTMLInputElement
       ).value.trim(),
       db: {
+        type:
+          (
+            card.querySelector('select[name="db-type"]') as HTMLSelectElement | null
+          )?.value || "postgres",
         host: (
           card.querySelector('input[name="db-host"]') as HTMLInputElement
         ).value.trim(),
@@ -231,7 +252,8 @@ function normalizeDbConfig(
   db: DatabaseConfig,
   defaultDatabaseName = "somedatabase",
 ): DatabaseConfig {
-  const normalized = {
+  const normalized: DatabaseConfig = {
+    type: db.type || "postgres",
     host: db.host.trim() || "localhost",
     port: db.port.trim() || "5432",
     database: db.database.trim() || defaultDatabaseName,
@@ -873,6 +895,8 @@ function scaffoldService(
     "domain/user.go": `domain/${entity}.go`,
     "data/usecase/user.go": `data/usecase/${entity}.go`,
     "data/repository/postgres/user.go": `data/repository/postgres/${entity}.go`,
+    "data/repository/postgres/test/user.go": `data/repository/postgres/test/${entity}.go`,
+    "data/repository/postgres/test/user_test.go": `data/repository/postgres/test/${entity}_test.go`,
     "data/delivery/http/handler/user.go": `data/delivery/http/handler/${entity}.go`,
     "data/delivery/grpc/proto/user.proto": `data/delivery/grpc/proto/${entity}.proto`,
   };
@@ -895,6 +919,9 @@ function scaffoldService(
 
   const specificReplacements: Array<[string, string]> = [
     ["user-service", serviceName],
+    ["TestUserRepository", `Test${entityPascal}Repository`],
+    ["TestUser", `Test${entityPascal}`],
+    ["UserRepoTestCase", `${entityPascal}RepoTestCase`],
     ["CreateUserRequest", `Create${entityPascal}Request`],
     ["UpdateUserRequest", `Update${entityPascal}Request`],
     ["GetUserByIdRequest", `Get${entityPascal}ByIdRequest`],
@@ -932,6 +959,8 @@ function scaffoldService(
     `${targetPrefix}domain/${entity}.go`,
     `${targetPrefix}data/usecase/${entity}.go`,
     `${targetPrefix}data/repository/postgres/${entity}.go`,
+    `${targetPrefix}data/repository/postgres/test/${entity}.go`,
+    `${targetPrefix}data/repository/postgres/test/${entity}_test.go`,
     `${targetPrefix}data/delivery/http/handler/${entity}.go`,
     `${targetPrefix}data/delivery/grpc/proto/${entity}.proto`,
     `${targetPrefix}openapi.yaml`,
@@ -1406,17 +1435,28 @@ function renderProjectTree(): void {
       ),
     );
     lines.push(line("│   ├── ", "📁", "config/", "", "", "", true));
+    lines.push(line("│   ├── ", "📁", "data/", "", "", "", true));
+    lines.push(
+      line("│   │   ├── ", "📁", "delivery/", "", "", "http & grpc", true),
+    );
+    lines.push(line("│   │   ├── ", "📁", "repository/", "", "", "", true));
+    lines.push(
+      line("│   │   │   └── ", "📁", "postgres/", "", "", "", true),
+    );
     lines.push(
       line(
-        "│   ├── ",
+        "│   │   │       ├── ",
         "📁",
-        "data/",
+        "test/",
         "",
         "",
-        "delivery, repo, usecase",
+        "repo testcases",
         true,
       ),
     );
+    lines.push(line("│   │   │       │   └── ", "📄", "auth.go"));
+    lines.push(line("│   │   │       └── ", "📄", "auth.go"));
+    lines.push(line("│   │   └── ", "📁", "usecase/", "", "", "", true));
     lines.push(
       line("│   ├── ", "📁", "domain/", "", "", "entities & errors", true),
     );
@@ -1440,17 +1480,28 @@ function renderProjectTree(): void {
       ),
     );
     lines.push(line("│   ├── ", "📁", "config/", "", "", "", true));
+    lines.push(line("│   ├── ", "📁", "data/", "", "", "", true));
+    lines.push(
+      line("│   │   ├── ", "📁", "delivery/", "", "", "http & grpc", true),
+    );
+    lines.push(line("│   │   ├── ", "📁", "repository/", "", "", "", true));
+    lines.push(
+      line("│   │   │   └── ", "📁", "postgres/", "", "", "", true),
+    );
     lines.push(
       line(
-        "│   ├── ",
+        "│   │   │       ├── ",
         "📁",
-        "data/",
+        "test/",
         "",
         "",
-        "delivery, repo, usecase",
+        "repo testcases",
         true,
       ),
     );
+    lines.push(line("│   │   │       │   └── ", "📄", `${s.name}.go`));
+    lines.push(line("│   │   │       └── ", "📄", `${s.name}.go`));
+    lines.push(line("│   │   └── ", "📁", "usecase/", "", "", "", true));
     lines.push(
       line("│   ├── ", "📁", "domain/", "", "", "entities & errors", true),
     );
@@ -1501,6 +1552,13 @@ function generateAsciiTree(): string {
     );
     lines.push("│   ├── config/");
     lines.push("│   ├── data/");
+    lines.push("│   │   ├── delivery/");
+    lines.push("│   │   ├── repository/");
+    lines.push("│   │   │   └── postgres/");
+    lines.push("│   │   │       ├── test/");
+    lines.push("│   │   │       │   └── auth.go");
+    lines.push("│   │   │       └── auth.go");
+    lines.push("│   │   └── usecase/");
     lines.push("│   ├── domain/");
     lines.push("│   ├── config.dev.yaml");
     lines.push("│   ├── Dockerfile");
@@ -1514,6 +1572,13 @@ function generateAsciiTree(): string {
     );
     lines.push("│   ├── config/");
     lines.push("│   ├── data/");
+    lines.push("│   │   ├── delivery/");
+    lines.push("│   │   ├── repository/");
+    lines.push("│   │   │   └── postgres/");
+    lines.push("│   │   │       ├── test/");
+    lines.push(`│   │   │       │   └── ${s.name}.go`);
+    lines.push(`│   │   │       └── ${s.name}.go`);
+    lines.push("│   │   └── usecase/");
     lines.push("│   ├── domain/");
     lines.push("│   ├── config.dev.yaml");
     lines.push("│   ├── Dockerfile");
@@ -1555,6 +1620,29 @@ document
 document
   .getElementById("service-count")
   ?.addEventListener("input", renderProjectTree);
+
+const projectDbSelect = document.getElementById(
+  "project-database",
+) as HTMLSelectElement | null;
+projectDbSelect?.addEventListener("change", () => {
+  const val = projectDbSelect.value;
+  const authDbSelect = document.getElementById(
+    "auth-db-type",
+  ) as HTMLSelectElement | null;
+  if (authDbSelect) {
+    authDbSelect.value = val;
+  }
+  document
+    .querySelectorAll<HTMLSelectElement>('select[name="db-type"]')
+    .forEach((sel) => {
+      sel.value = val;
+    });
+  renderProjectTree();
+});
+
+document
+  .getElementById("auth-db-type")
+  ?.addEventListener("change", renderProjectTree);
 
 applyServicesButtonEl.addEventListener("click", () => {
   showConfigSections();

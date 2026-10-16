@@ -7,7 +7,7 @@
   </defs>
 
   <!-- 100% identical squircle frame as .nav-logo-badge -->
-  <rect width="64" height="64" rx="16" fill="url(#nav-badge-bg)" stroke="#4f46e5" stroke-width="1.5" stroke-opacity="0.4" />
+  <rect width="64" height="64" rx="16" fill="url(#nav-badge-bg)" stroke="#6366f1" stroke-width="1.5" stroke-opacity="0.4" />
 
   <!-- Lucide Astroid - exact same 24x24 path, stroke #38bdf8, no extra dot or fill -->
   <g transform="translate(14, 14) scale(1.5)">

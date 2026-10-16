@@ -86,8 +86,8 @@
       height: 40px;
       border-radius: 10px;
       background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-      border: 1px solid rgba(79, 70, 229, 0.4);
-      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -98,7 +98,7 @@
 
     .nav-brand:hover .nav-logo-badge {
       transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
       color: #67e8f9;
     }
 
@@ -118,9 +118,9 @@
       font-weight: 700;
       letter-spacing: -0.01em;
       background: linear-gradient(135deg,
-          #4f46e5 0%,
+          #6366f1 0%,
           #818cf8 50%,
-          #4f46e5 100%);
+          #6366f1 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -213,7 +213,7 @@
       padding: 4px 12px;
       border-radius: 9999px;
       background: #eef2ff;
-      color: #4338ca;
+      color: #6366f1;
       font-size: 0.78rem;
       font-weight: 700;
       border: 1px solid #c7d2fe;
@@ -225,7 +225,7 @@
     }
 
     .hero-credit a {
-      color: #4f46e5;
+      color: #6366f1;
       text-decoration: none;
       font-weight: 600;
     }
@@ -299,7 +299,7 @@
       text-transform: uppercase;
       letter-spacing: 0.06em;
       font-weight: 700;
-      color: #4f46e5;
+      color: #6366f1;
     }
 
     .block-title {
@@ -347,7 +347,8 @@
       font-weight: 400;
     }
 
-    input {
+    input,
+    select {
       width: 100%;
       height: 40px;
       border: 1px solid #cbd5e1;
@@ -363,13 +364,30 @@
         box-shadow 0.15s ease;
     }
 
+    select {
+      padding-right: 36px;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 10px center;
+      background-repeat: no-repeat;
+      background-size: 1.25em 1.25em;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      cursor: pointer;
+    }
+
     input::placeholder {
       color: #94a3b8;
     }
 
-    input:focus {
-      border-color: #4f46e5;
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    input:focus,
+    select:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    select option:disabled {
+      color: #94a3b8;
     }
 
     /* Toggle Switch */
@@ -455,11 +473,11 @@
     }
 
     .switch input:checked+.slider {
-      background-color: #4f46e5;
+      background-color: #6366f1;
     }
 
     .switch input:focus-visible+.slider {
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
     }
 
     .switch input:checked+.slider::before {
@@ -532,7 +550,7 @@
       font-size: 0.72rem;
       font-weight: 700;
       background: #eef2ff;
-      color: #4f46e5;
+      color: #6366f1;
       border: 1px solid #c7d2fe;
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -604,26 +622,26 @@
     #apply-services-button:hover {
       background: #eef2ff;
       border-color: #818cf8;
-      color: #4338ca;
+      color: #6366f1;
     }
 
     #generate-button {
       height: 44px;
       padding: 0 24px;
-      background: #4f46e5;
+      background: #6366f1;
       color: #ffffff;
       border: none;
       font-weight: 600;
       font-size: 0.92rem;
-      box-shadow: 0 1px 2px rgba(79, 70, 229, 0.2);
+      box-shadow: 0 1px 2px rgba(99, 102, 241, 0.2);
       display: inline-flex;
       align-items: center;
       gap: 8px;
     }
 
     #generate-button:hover {
-      background: #4338ca;
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+      background: #4f46e5;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
       transform: translateY(-1px);
     }
 
@@ -709,7 +727,7 @@
     .structure-stats {
       font-size: 0.78rem;
       font-weight: 600;
-      color: #4f46e5;
+      color: #6366f1;
       background: #eef2ff;
       border: 1px solid #c7d2fe;
       padding: 4px 10px;
@@ -925,7 +943,7 @@
     }
 
     .page-footer a {
-      color: #4f46e5;
+      color: #6366f1;
       text-decoration: none;
       font-weight: 600;
     }
@@ -1070,20 +1088,35 @@
       color: #737373;
     }
 
-    html.dark input {
-      background: #262626;
+    html.dark input,
+    html.dark select {
+      background-color: #262626;
       border-color: #2a2a2a;
       color: #ededed;
+    }
+
+    html.dark select {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23a3a3a3' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
     }
 
     html.dark input::placeholder {
       color: #737373;
     }
 
-    html.dark input:focus {
-      border-color: #4f46e5;
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
-      background: #1f1f1f;
+    html.dark input:focus,
+    html.dark select:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+      background-color: #1f1f1f;
+    }
+
+    html.dark select option {
+      background-color: #171717;
+      color: #ededed;
+    }
+
+    html.dark select option:disabled {
+      color: #737373;
     }
 
     html.dark .toggle-card {
@@ -1104,7 +1137,7 @@
     }
 
     html.dark input:checked + .slider {
-      background-color: #4f46e5;
+      background-color: #6366f1;
     }
 
     html.dark #apply-services-button {
@@ -1279,7 +1312,7 @@
       color: #ffffff;
     }
   </style>
-  <script type="module" crossorigin src="/assets/index-Bw4dTWPW.js"></script>
+  <script type="module" crossorigin src="/assets/index-CQeCfwbh.js"></script>
 </head>
 
 <body>
@@ -1347,6 +1380,18 @@
               Project Name
               <span class="label-caption">Used as your service workspace name</span>
               <input id="project-name" name="project-name" placeholder="some-platform" />
+            </label>
+
+            <label>
+              Database
+              <span class="label-caption">Select database engine</span>
+              <select id="project-database" name="project-database">
+                <option value="postgres" selected>PostgreSQL</option>
+                <option value="mysql" disabled>MySQL (Coming Soon)</option>
+                <option value="mongodb" disabled>MongoDB (Coming Soon)</option>
+                <option value="sqlite" disabled>SQLite (Coming Soon)</option>
+                <option value="mariadb" disabled>MariaDB (Coming Soon)</option>
+              </select>
             </label>
 
             <div class="toggle-card">
@@ -1443,6 +1488,18 @@
               <div class="service-subsection db-section">
                 <h3 class="subsection-title">Database Config</h3>
                 <div class="grid">
+                  <label>
+                    Database
+                    <span class="label-caption">Select database engine</span>
+                    <select id="auth-db-type" name="auth-db-type">
+                      <option value="postgres" selected>PostgreSQL</option>
+                      <option value="mysql" disabled>MySQL (Coming Soon)</option>
+                      <option value="mongodb" disabled>MongoDB (Coming Soon)</option>
+                      <option value="sqlite" disabled>SQLite (Coming Soon)</option>
+                      <option value="mariadb" disabled>MariaDB (Coming Soon)</option>
+                    </select>
+                  </label>
+
                   <label>
                     DB Host
                     <span class="label-caption">Database server hostname</span>
