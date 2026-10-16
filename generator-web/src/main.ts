@@ -894,10 +894,11 @@ function scaffoldService(
   const pathRenames: Record<string, string> = {
     "domain/user.go": `domain/${entity}.go`,
     "data/usecase/user.go": `data/usecase/${entity}.go`,
+    "data/usecase/test/user_test.go": `data/usecase/test/${entity}_test.go`,
     "data/repository/postgres/user.go": `data/repository/postgres/${entity}.go`,
-    "data/repository/postgres/test/user.go": `data/repository/postgres/test/${entity}.go`,
     "data/repository/postgres/test/user_test.go": `data/repository/postgres/test/${entity}_test.go`,
     "data/delivery/http/handler/user.go": `data/delivery/http/handler/${entity}.go`,
+    "data/delivery/http/handler/test/user_test.go": `data/delivery/http/handler/test/${entity}_test.go`,
     "data/delivery/grpc/proto/user.proto": `data/delivery/grpc/proto/${entity}.proto`,
   };
 
@@ -920,6 +921,8 @@ function scaffoldService(
   const specificReplacements: Array<[string, string]> = [
     ["user-service", serviceName],
     ["TestUserRepository", `Test${entityPascal}Repository`],
+    ["TestUserUsecase", `Test${entityPascal}Usecase`],
+    ["TestUserHandler", `Test${entityPascal}Handler`],
     ["TestUser", `Test${entityPascal}`],
     ["UserRepoTestCase", `${entityPascal}RepoTestCase`],
     ["CreateUserRequest", `Create${entityPascal}Request`],
@@ -958,10 +961,11 @@ function scaffoldService(
     `${targetPrefix}domain/errors.go`,
     `${targetPrefix}domain/${entity}.go`,
     `${targetPrefix}data/usecase/${entity}.go`,
+    `${targetPrefix}data/usecase/test/${entity}_test.go`,
     `${targetPrefix}data/repository/postgres/${entity}.go`,
-    `${targetPrefix}data/repository/postgres/test/${entity}.go`,
     `${targetPrefix}data/repository/postgres/test/${entity}_test.go`,
     `${targetPrefix}data/delivery/http/handler/${entity}.go`,
+    `${targetPrefix}data/delivery/http/handler/test/${entity}_test.go`,
     `${targetPrefix}data/delivery/grpc/proto/${entity}.proto`,
     `${targetPrefix}openapi.yaml`,
   ]);
@@ -1439,24 +1443,32 @@ function renderProjectTree(): void {
     lines.push(
       line("│   │   ├── ", "📁", "delivery/", "", "", "http & grpc", true),
     );
+    lines.push(
+      line("│   │   │   ├── ", "📁", "http/handler/", "", "", "", true),
+    );
+    lines.push(
+      line("│   │   │   │   ├── ", "📁", "test/", "", "", "handler test", true),
+    );
+    lines.push(line("│   │   │   │   │   └── ", "📄", "auth_test.go"));
+    lines.push(line("│   │   │   │   └── ", "📄", "auth.go"));
+    lines.push(
+      line("│   │   │   └── ", "📁", "grpc/proto/", "", "", "", true),
+    );
     lines.push(line("│   │   ├── ", "📁", "repository/", "", "", "", true));
     lines.push(
       line("│   │   │   └── ", "📁", "postgres/", "", "", "", true),
     );
     lines.push(
-      line(
-        "│   │   │       ├── ",
-        "📁",
-        "test/",
-        "",
-        "",
-        "repo testcases",
-        true,
-      ),
+      line("│   │   │       ├── ", "📁", "test/", "", "", "repo test", true),
     );
-    lines.push(line("│   │   │       │   └── ", "📄", "auth.go"));
+    lines.push(line("│   │   │       │   └── ", "📄", "auth_test.go"));
     lines.push(line("│   │   │       └── ", "📄", "auth.go"));
     lines.push(line("│   │   └── ", "📁", "usecase/", "", "", "", true));
+    lines.push(
+      line("│   │       ├── ", "📁", "test/", "", "", "usecase test", true),
+    );
+    lines.push(line("│   │       │   └── ", "📄", "auth_test.go"));
+    lines.push(line("│   │       └── ", "📄", "auth.go"));
     lines.push(
       line("│   ├── ", "📁", "domain/", "", "", "entities & errors", true),
     );
@@ -1484,24 +1496,32 @@ function renderProjectTree(): void {
     lines.push(
       line("│   │   ├── ", "📁", "delivery/", "", "", "http & grpc", true),
     );
+    lines.push(
+      line("│   │   │   ├── ", "📁", "http/handler/", "", "", "", true),
+    );
+    lines.push(
+      line("│   │   │   │   ├── ", "📁", "test/", "", "", "handler test", true),
+    );
+    lines.push(line("│   │   │   │   │   └── ", "📄", `${s.name}_test.go`));
+    lines.push(line("│   │   │   │   └── ", "📄", `${s.name}.go`));
+    lines.push(
+      line("│   │   │   └── ", "📁", "grpc/proto/", "", "", "", true),
+    );
     lines.push(line("│   │   ├── ", "📁", "repository/", "", "", "", true));
     lines.push(
       line("│   │   │   └── ", "📁", "postgres/", "", "", "", true),
     );
     lines.push(
-      line(
-        "│   │   │       ├── ",
-        "📁",
-        "test/",
-        "",
-        "",
-        "repo testcases",
-        true,
-      ),
+      line("│   │   │       ├── ", "📁", "test/", "", "", "repo test", true),
     );
-    lines.push(line("│   │   │       │   └── ", "📄", `${s.name}.go`));
+    lines.push(line("│   │   │       │   └── ", "📄", `${s.name}_test.go`));
     lines.push(line("│   │   │       └── ", "📄", `${s.name}.go`));
     lines.push(line("│   │   └── ", "📁", "usecase/", "", "", "", true));
+    lines.push(
+      line("│   │       ├── ", "📁", "test/", "", "", "usecase test", true),
+    );
+    lines.push(line("│   │       │   └── ", "📄", `${s.name}_test.go`));
+    lines.push(line("│   │       └── ", "📄", `${s.name}.go`));
     lines.push(
       line("│   ├── ", "📁", "domain/", "", "", "entities & errors", true),
     );
@@ -1553,12 +1573,20 @@ function generateAsciiTree(): string {
     lines.push("│   ├── config/");
     lines.push("│   ├── data/");
     lines.push("│   │   ├── delivery/");
+    lines.push("│   │   │   ├── http/handler/");
+    lines.push("│   │   │   │   ├── test/");
+    lines.push("│   │   │   │   │   └── auth_test.go");
+    lines.push("│   │   │   │   └── auth.go");
+    lines.push("│   │   │   └── grpc/proto/");
     lines.push("│   │   ├── repository/");
     lines.push("│   │   │   └── postgres/");
     lines.push("│   │   │       ├── test/");
-    lines.push("│   │   │       │   └── auth.go");
+    lines.push("│   │   │       │   └── auth_test.go");
     lines.push("│   │   │       └── auth.go");
     lines.push("│   │   └── usecase/");
+    lines.push("│   │       ├── test/");
+    lines.push("│   │       │   └── auth_test.go");
+    lines.push("│   │       └── auth.go");
     lines.push("│   ├── domain/");
     lines.push("│   ├── config.dev.yaml");
     lines.push("│   ├── Dockerfile");
@@ -1573,12 +1601,20 @@ function generateAsciiTree(): string {
     lines.push("│   ├── config/");
     lines.push("│   ├── data/");
     lines.push("│   │   ├── delivery/");
+    lines.push("│   │   │   ├── http/handler/");
+    lines.push("│   │   │   │   ├── test/");
+    lines.push(`│   │   │   │   │   └── ${s.name}_test.go`);
+    lines.push(`│   │   │   │   └── ${s.name}.go`);
+    lines.push("│   │   │   └── grpc/proto/");
     lines.push("│   │   ├── repository/");
     lines.push("│   │   │   └── postgres/");
     lines.push("│   │   │       ├── test/");
-    lines.push(`│   │   │       │   └── ${s.name}.go`);
+    lines.push(`│   │   │       │   └── ${s.name}_test.go`);
     lines.push(`│   │   │       └── ${s.name}.go`);
     lines.push("│   │   └── usecase/");
+    lines.push("│   │       ├── test/");
+    lines.push(`│   │       │   └── ${s.name}_test.go`);
+    lines.push(`│   │       └── ${s.name}.go`);
     lines.push("│   ├── domain/");
     lines.push("│   ├── config.dev.yaml");
     lines.push("│   ├── Dockerfile");

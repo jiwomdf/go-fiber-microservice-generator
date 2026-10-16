@@ -237,14 +237,17 @@ rsync -a \
 
 mv "$target_dir/domain/user.go" "$target_dir/domain/${entity}.go"
 mv "$target_dir/data/usecase/user.go" "$target_dir/data/usecase/${entity}.go"
-mv "$target_dir/data/repository/postgres/user.go" "$target_dir/data/repository/postgres/${entity}.go"
-if [[ -f "$target_dir/data/repository/postgres/test/user.go" ]]; then
-  mv "$target_dir/data/repository/postgres/test/user.go" "$target_dir/data/repository/postgres/test/${entity}.go"
+if [[ -f "$target_dir/data/usecase/test/user_test.go" ]]; then
+  mv "$target_dir/data/usecase/test/user_test.go" "$target_dir/data/usecase/test/${entity}_test.go"
 fi
+mv "$target_dir/data/repository/postgres/user.go" "$target_dir/data/repository/postgres/${entity}.go"
 if [[ -f "$target_dir/data/repository/postgres/test/user_test.go" ]]; then
   mv "$target_dir/data/repository/postgres/test/user_test.go" "$target_dir/data/repository/postgres/test/${entity}_test.go"
 fi
 mv "$target_dir/data/delivery/http/handler/user.go" "$target_dir/data/delivery/http/handler/${entity}.go"
+if [[ -f "$target_dir/data/delivery/http/handler/test/user_test.go" ]]; then
+  mv "$target_dir/data/delivery/http/handler/test/user_test.go" "$target_dir/data/delivery/http/handler/test/${entity}_test.go"
+fi
 mv "$target_dir/data/delivery/grpc/proto/user.proto" "$target_dir/data/delivery/grpc/proto/${entity}.proto"
 
 files=(
@@ -258,11 +261,12 @@ files=(
   "$target_dir/domain/errors.go"
   "$target_dir/domain/${entity}.go"
   "$target_dir/data/usecase/${entity}.go"
+  "$target_dir/data/usecase/test/${entity}_test.go"
   "$target_dir/data/repository/postgres/${entity}.go"
-  "$target_dir/data/repository/postgres/test/${entity}.go"
   "$target_dir/data/repository/postgres/test/${entity}_test.go"
   "$target_dir/data/delivery/http/router.go"
   "$target_dir/data/delivery/http/handler/${entity}.go"
+  "$target_dir/data/delivery/http/handler/test/${entity}_test.go"
   "$target_dir/data/delivery/grpc/proto/${entity}.proto"
   "$target_dir/migration/01_initial_schema.up.sql"
   "$target_dir/openapi.yaml"
@@ -307,10 +311,11 @@ entity_files=(
   "$target_dir/domain/errors.go"
   "$target_dir/domain/${entity}.go"
   "$target_dir/data/usecase/${entity}.go"
+  "$target_dir/data/usecase/test/${entity}_test.go"
   "$target_dir/data/repository/postgres/${entity}.go"
-  "$target_dir/data/repository/postgres/test/${entity}.go"
   "$target_dir/data/repository/postgres/test/${entity}_test.go"
   "$target_dir/data/delivery/http/handler/${entity}.go"
+  "$target_dir/data/delivery/http/handler/test/${entity}_test.go"
   "$target_dir/data/delivery/grpc/proto/${entity}.proto"
   "$target_dir/openapi.yaml"
 )
