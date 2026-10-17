@@ -1,6 +1,8 @@
 # Go Fiber Microservice Generator
 
-Build Go Microservices Effortlessly with a `Fiber` & `Traefik` Code Generator
+This project started as a personal tool to make microservices prototyping easier and faster for my own development needs. I decided to make it public so other developers can use it to simplify their own microservices prototyping and get started more quickly.
+
+Build Go Microservices Effortlessly with a Fiber & Traefik Code Generator.
 
 Live Generator app:
 **https://jiwomdf.github.io/go-fiber-microservice-generator/**
